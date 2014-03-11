@@ -3,6 +3,7 @@
  */
 package com.rmemoria.datastream.impl;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Stack;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -21,6 +23,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.rmemoria.datastream.DataConverter;
+import com.rmemoria.datastream.DataStreamException;
 import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.ObjectConsumer;
 
@@ -118,8 +121,11 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 
 			parser.parse(xmlstream,  handler);
 
-		} catch (Exception e) {
-
+		} catch (SAXException e) {
+			throw new RuntimeException(e);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} catch (ParserConfigurationException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -139,13 +145,13 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				// if the node name is not the same as expected, raise an error
 				String collname = currentCollection.getObjectCollection().getName();
 				if (!collname.equals(name))
-					throw new IllegalArgumentException("Expected element '" + collname + "' but found '" + name + "'");
+					throw new DataStreamException("Expected element '" + collname + "' but found '" + name + "'");
 			}
 			else {
 				// initialize the node for the first selection, which must be a class
 				ClassMetaData cmd = context.findClassByElement(name);
 				if (cmd == null)
-					throw new IllegalArgumentException("No class found for element " + name);
+					throw new DataStreamException("No class mapped for element " + name);
 				node = new NodeSelection(null, cmd);
 				startClass(attributes);
 				if (consumer != null)
@@ -158,8 +164,8 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		if (node.isClassSelection()) {
 			PropertyMetaData prop = node.getClassMetaData().findPropertyByElementName(name);
 			if (prop == null)
-				throw new IllegalArgumentException("No property found for element " + name + 
-						" in class " + node.getClassMetaData().getGraphClass().getName());
+				throw new DataStreamException(node.getClassMetaData(), null, "Invalid element " + name + 
+						" in node " + node.getClassMetaData().getGraph().getName());
 
 			node = new NodeSelection(node, prop);
 			// is an one-to-one relationship between objects ?
@@ -175,8 +181,9 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		// if there is no type defined in the property, so there is an error
 		ClassMetaData cmd = node.getPropertyMetaData().getCompactibleTypeMetaData();
 		if (cmd == null)
-			throw new IllegalArgumentException("A new element was found in property but no graph defined for property " 
-					+ node.getPropertyMetaData() + ": element " + name);
+			throw new DataStreamException(node.getPropertyMetaData().getClassMetaData(), 
+				node.getPropertyMetaData(), 
+				"A new element was found in property but no graph defined for property " + node.getPropertyMetaData() + ": element " + name);
 		node = new NodeSelection(node, cmd);
 
 		startClass(attributes);
@@ -201,8 +208,8 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				PropertyMetaData prop = currentClass.findPropertyByElementName(propname);
 				// if the attribute is not a property, raise an exception
 				if (prop == null)
-					throw new IllegalArgumentException("No property found for element " + propname + 
-							" in class " + currentClass.getGraphClass().getName());
+					throw new DataStreamException(currentClass, null, "Invalid element " + propname + 
+							" in node " + currentClass.getGraph().getName());
 				Class type = prop.getConvertionType();
 				DataConverter conv = context.findConverter(type);
 				Object val = conv.convertFromString(propvalue, type);
@@ -311,6 +318,8 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 			return;
 
 		value = value.trim();
+		if (value.isEmpty())
+			return;
 		
 		// get the content of the current property being read
 		if (node.isPropertySelection()) {
@@ -325,7 +334,9 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		}
 
 		if (node.isClassSelection()) {
-			throw new IllegalArgumentException("A class element cannot have a content: " + node.getClassMetaData().getGraph().getName());
+			throw new DataStreamException(node.getClassMetaData(), 
+				null, 
+				"A class element cannot have a content: " + node.getClassMetaData().getGraph().getName());
 		}
 	}
 

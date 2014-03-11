@@ -161,7 +161,7 @@ public class ClassPropertyScanner {
 		FieldAccess fa = createFieldAccess(field);
 		if (fa == null) {
 			if (prop.getProperty() != null)
-				throw new DataStreamException("Property must have a get/set method to its value: " + prop);
+				throw new RuntimeException("Property must have a get/set method to its value: " + prop);
 			else return false;
 		}
 

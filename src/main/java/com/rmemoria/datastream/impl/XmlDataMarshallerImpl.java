@@ -47,7 +47,7 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 				// was a collection defined in the root element ?
 				CollectionMetaData colMetaData = context.getCollectionMetaData();
 				if (colMetaData == null)
-					throw new IllegalArgumentException("Collection instance was not expected for marshalling");
+					throw new DataStreamException("Collection instance was not expected for marshalling");
 
 				// marshall the collection
 				marshallCollection((Collection)obj, colMetaData);
@@ -55,7 +55,7 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 			else {
 				ClassMetaData cmd = context.findClassMetaData(obj);
 				if (cmd == null)
-					throw new IllegalArgumentException("No schema defined for object of class " + obj.getClass().getName());
+					throw new DataStreamException("No schema defined for object of class " + obj.getClass().getName());
 				// write a single object
 				createXml(obj, cmd, true);
 			}
