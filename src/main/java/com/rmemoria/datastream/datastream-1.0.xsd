@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="graphSchema" type="graphSchema"/>
+
+  <xs:complexType name="property">
+    <xs:sequence>
+      <xs:element name="objectGraph" type="objectGraph" minOccurs="0" maxOccurs="1"/>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="use" type="propertyUse"/>
+    <xs:attribute name="elementName" type="xs:string"/>
+    <xs:attribute name="xmlAttribute" type="xs:boolean"/>
+  </xs:complexType>
+
+  <xs:complexType name="objectGraph">
+    <xs:sequence>
+      <xs:element name="property" type="property" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="class" type="xs:string" use="required"/>
+    <xs:attribute name="parentProperty" type="xs:string"/>
+    <xs:attribute name="ignorePropsNotDeclared" type="xs:boolean" use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="graphSchema">
+    <xs:sequence>
+      <xs:element name="objectGraph" type="objectGraph" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="objectCollection" type="objectCollection" minOccurs="0" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="objectCollection">
+  	<xs:sequence>
+  		<xs:element name="objectGraph" type="objectGraph"
+  			minOccurs="1" maxOccurs="unbounded" />
+  	</xs:sequence>
+  	<xs:attribute name="name" type="xs:string" use="required" />
+  	<xs:attribute name="class" type="xs:string" />
+  </xs:complexType>
+
+  <xs:simpleType name="propertyUse">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="REQUIRED"/>
+      <xs:enumeration value="IGNORE"/>
+      <xs:enumeration value="NOT_REQUIRED"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
+
