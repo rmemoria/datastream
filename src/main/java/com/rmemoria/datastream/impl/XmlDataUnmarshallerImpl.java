@@ -26,6 +26,7 @@ import com.rmemoria.datastream.DataConverter;
 import com.rmemoria.datastream.DataStreamException;
 import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.ObjectConsumer;
+import com.rmemoria.datastream.jaxb.PropertyUse;
 
 /**
  * Unmarshall an object from its XML representation to its object (or several objects, if it's
@@ -243,6 +244,9 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 			node = node.getParent();
 
 			ObjectValues vals = objects.pop();
+			
+			checkRequiredProperties(vals);
+			
 			Object obj = createObject(vals);
 
 			// is parent node a property ?
@@ -277,6 +281,22 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	}
 
 	
+	/**
+	 * Check if there is a missing property that is required
+	 * @param vals
+	 */
+	private void checkRequiredProperties(ObjectValues vals) {
+		for (PropertyMetaData prop: vals.getClassMetaData().getProperties()) {
+			// is property required ?
+			if (prop.getProperty() != null) {
+				if ((prop.getProperty().getUse() == PropertyUse.REQUIRED) && (vals.getValues().get(prop) == null)) {
+					String s = "Property '" + vals.getClassMetaData().getGraph().getName() + "."  + prop.getElementName() + "' is required";
+					throw new DataStreamException(s);
+				}
+			}
+		}
+	}
+
 	/**
 	 * Create an instance of the object using the current class meta data and the list
 	 * of property values

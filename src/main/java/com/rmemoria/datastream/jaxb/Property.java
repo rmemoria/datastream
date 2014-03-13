@@ -111,7 +111,7 @@ public class Property {
      */
     public PropertyUse getUse() {
         if (use == null) {
-            return PropertyUse.REQUIRED;
+            return PropertyUse.NOT_REQUIRED;
         } else {
             return use;
         }

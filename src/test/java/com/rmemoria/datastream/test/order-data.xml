@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<order>
+	<customer>
+		<email>customer@test.com</email>
+	</customer>
+	<items>
+		<item product="123">
+			<quantity>1000</quantity>
+			<unitPrice>1.23</unitPrice>
+		</item>
+		<item product="555">
+			<quantity>500</quantity>
+			<unitPrice>5.45</unitPrice>
+		</item>
+	</items>
+	<discount>10.0</discount>
+	<orderDate>2014-03-10T23:10:38-0300</orderDate>
+	<status>NEW</status>
+</order>
