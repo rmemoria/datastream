@@ -183,7 +183,7 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		ClassMetaData cmd = node.getPropertyMetaData().getCompactibleTypeMetaData();
 		if (cmd == null)
 			throw new DataStreamException(node.getPropertyMetaData().getClassMetaData(), 
-				node.getPropertyMetaData(), 
+				node.getPropertyMetaData(), getNodeHistory() + ": " +  
 				"A new element was found in property but no graph defined for property " + node.getPropertyMetaData() + ": element " + name);
 		node = new NodeSelection(node, cmd);
 
@@ -209,7 +209,7 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				PropertyMetaData prop = currentClass.findPropertyByElementName(propname);
 				// if the attribute is not a property, raise an exception
 				if (prop == null)
-					throw new DataStreamException(currentClass, null, "Invalid element " + propname + 
+					throw new DataStreamException(currentClass, null, getNodeHistory() +  ": Invalid element " + propname + 
 							" in node " + currentClass.getGraph().getName());
 				Class type = prop.getConvertionType();
 				DataConverter conv = context.findConverter(type);
@@ -355,8 +355,8 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 
 		if (node.isClassSelection()) {
 			throw new DataStreamException(node.getClassMetaData(), 
-				null, 
-				"A class element cannot have a content: " + node.getClassMetaData().getGraph().getName());
+				null, getNodeHistory() +
+				": A class element cannot have a content: " + node.getClassMetaData().getGraph().getName());
 		}
 	}
 
