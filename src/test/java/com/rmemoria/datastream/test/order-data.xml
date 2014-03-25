@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<order>
+<order id="100">
 	<customer>
 		<email>customer@test.com</email>
 	</customer>

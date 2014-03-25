@@ -25,6 +25,12 @@ public class RequiredTest {
 
 	private StreamContext context;
 	
+
+	public static void main(String[] args) throws Exception {
+		RequiredTest test = new RequiredTest();
+		test.testRequired();
+	}
+	
 	/**
 	 * Test the required field
 	 */

@@ -146,13 +146,13 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				// if the node name is not the same as expected, raise an error
 				String collname = currentCollection.getObjectCollection().getName();
 				if (!collname.equals(name))
-					throw new DataStreamException("Expected element '" + collname + "' but found '" + name + "'");
+					throw new DataStreamException(getNodeHistory() +  ": Expected element '" + collname + "' but found '" + name + "'");
 			}
 			else {
 				// initialize the node for the first selection, which must be a class
 				ClassMetaData cmd = context.findClassByElement(name);
 				if (cmd == null)
-					throw new DataStreamException("No class mapped for element " + name);
+					throw new DataStreamException(getNodeHistory() + ": No class mapped for element " + name);
 				node = new NodeSelection(null, cmd);
 				startClass(attributes);
 				if (consumer != null)
@@ -165,7 +165,7 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		if (node.isClassSelection()) {
 			PropertyMetaData prop = node.getClassMetaData().findPropertyByElementName(name);
 			if (prop == null)
-				throw new DataStreamException(node.getClassMetaData(), null, "Invalid element " + name + 
+				throw new DataStreamException(node.getClassMetaData(), null, getNodeHistory() + ": Invalid element " + name + 
 						" in node " + node.getClassMetaData().getGraph().getName());
 
 			node = new NodeSelection(node, prop);
@@ -291,7 +291,7 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 			if (prop.getProperty() != null) {
 				if ((prop.getProperty().getUse() == PropertyUse.REQUIRED) && (vals.getValues().get(prop) == null)) {
 					String s = "Property '" + vals.getClassMetaData().getGraph().getName() + "."  + prop.getElementName() + "' is required";
-					throw new DataStreamException(s);
+					throw new DataStreamException(getNodeHistory() + ": " +  s);
 				}
 			}
 		}
@@ -360,4 +360,30 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		}
 	}
 
+	
+	/**
+	 * Return a text containing the displayable history of the current node
+	 * @return String value
+	 */
+	protected String getNodeHistory() {
+		String s = "";
+		for (ObjectValues obj: objects) {
+			if (!s.isEmpty()) {
+				s += ", ";
+			}
+			s += obj.getClassMetaData().getGraph().getName();
+			if ((obj.getValues() != null) && (obj.getValues().size() > 0)) {
+				String text = "";
+				for (PropertyMetaData prop: obj.getValues().keySet()) {
+					if (!text.isEmpty()) {
+						text += ", ";
+					}
+					String propname = prop.getProperty().getElementName() != null? prop.getProperty().getElementName(): prop.getProperty().getName();
+					text += propname + "=" + obj.getValues().get(prop);
+				}
+				s += "[" + text + "]"; 
+			}
+		}
+		return s;
+	}
 }
