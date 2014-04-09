@@ -127,18 +127,24 @@ public class PropertyMetaData {
 	 * @return
 	 */
 	private Object getFieldAccessObject(StreamContext context, FieldAccess fa, Object obj, String propname, Object propvalue) {
-		Object value = fa.getValue(obj);
-		if (value != null)
-			return value;
+		Object currentValue = fa.getValue(obj);
+//		if (value != null)
+//			return value;
 
+		// TODO: Implement list auto creation
+		if ((currentValue != null) && (currentValue instanceof Collection)) {
+			return currentValue;
+		}
 		Class type = fa.getField().getType();
 		Map<String, Object> params = null;
 		if (propvalue != null) {
 			params = new HashMap<String, Object>();
 			params.put(propname, propvalue);
 		}
-		value = context.createInstance(type, params);
-		fa.setValue(obj, value);
+		Object value = context.createInstance(type, params);
+		if (value != currentValue) {
+			fa.setValue(obj, value);
+		}
 		return value;
 	}
 
