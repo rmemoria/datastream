@@ -64,8 +64,10 @@ public class PropertyMetaData {
 	 * @param context implementation of {@link StreamContext} 
 	 * @param obj the object to have its property set
 	 * @param value the value to set
+	 * @param forceObjectValue if true, and if value is not null, the getFieldAccessObject won't call the 
+	 * 		client to generate a new value, but use the value provided in the method argument
 	 */
-	public void setValue(StreamContext context, Object obj, Object value) {
+	public void setValue(StreamContext context, Object obj, Object value, boolean forceObjectValue) {
 		PropertyMetaData linkprop = getTypeMetaData() != null? getTypeMetaData().getLinkParentObject() : null;
 
 		// is a collection ?
@@ -76,7 +78,7 @@ public class PropertyMetaData {
 				// is the property link between objects defined? 
 				if (linkprop != null) {
 					// link objects in the list with its parent by its link property 
-						linkprop.setValue(context, item, obj);
+						linkprop.setValue(context, item, obj, true);
 				}
 			}
 			return;
@@ -85,12 +87,12 @@ public class PropertyMetaData {
 		if (subfields != null) {
 			// get the first reference of a composite property
 			String propname = getPropertyName(0);
-			Object target = getFieldAccessObject(context, field, obj, propname, value);
+			Object target = getFieldAccessObject(context, field, obj, propname, value, forceObjectValue);
 
 			// navigate through the fields of the composite property
 			for (int i = 0; i < subfields.length - 1; i++) {
 				propname = getPropertyName(i + 1);
-				target = getFieldAccessObject(context, subfields[i], target, propname, value);
+				target = getFieldAccessObject(context, subfields[i], target, propname, value, false);
 			}
 
 			// set the value of the last field in the composite property
@@ -103,7 +105,7 @@ public class PropertyMetaData {
 		// is the link property between objects available ?
 		if (linkprop != null) {
 			// set the link between the object and the value, if available
-			linkprop.setValue(context, value, obj);
+			linkprop.setValue(context, value, obj, true);
 		}
 	}
 
@@ -126,10 +128,10 @@ public class PropertyMetaData {
 	 * @param obj
 	 * @return
 	 */
-	private Object getFieldAccessObject(StreamContext context, FieldAccess fa, Object obj, String propname, Object propvalue) {
+	private Object getFieldAccessObject(StreamContext context, FieldAccess fa, Object obj, String propname, Object propvalue, boolean forcePropValue) {
 		Object currentValue = fa.getValue(obj);
-//		if (value != null)
-//			return value;
+		if ((currentValue != null) && (forcePropValue))
+			return currentValue;
 
 		// TODO: Implement list auto creation
 		if ((currentValue != null) && (currentValue instanceof Collection)) {
@@ -219,10 +221,10 @@ public class PropertyMetaData {
 	 * @return
 	 */
 	public Collection getCollectionObject(StreamContext context, Object obj) {
-		Object value = getFieldAccessObject(context, field, obj, null, null);
+		Object value = getFieldAccessObject(context, field, obj, null, null, false);
 		if (subfields != null) {
 			for (FieldAccess fa: subfields) {
-				value = getFieldAccessObject(context, fa, value, null, null);
+				value = getFieldAccessObject(context, fa, value, null, null, false);
 			}
 		}
 		return (Collection)value;

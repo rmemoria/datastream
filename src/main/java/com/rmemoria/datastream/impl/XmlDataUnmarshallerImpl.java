@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -307,13 +308,15 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		// create an instance of the object
 		Object obj = context.createInstance(vals.getClassMetaData().getGraphClass(), getObjectAttributes(vals));
 //		Object obj = context.createInstance(currentClass.getGraphClass(), getObjectAttributes(vals));
+
 		// set the values of the properties
-		for (PropertyMetaData prop: vals.getValues().keySet()) {
-			Object value = vals.getValues().get(prop);
-			prop.setValue(context, obj, value);
+		List<PropertyValues> props = vals.groupProperties();
+		for (PropertyValues prop: props) {
+			prop.applyValues(context, obj);
 		}
 		return obj;
 	}
+	
 	
 	/**
 	 * Mount the list of properties for the creation of the object

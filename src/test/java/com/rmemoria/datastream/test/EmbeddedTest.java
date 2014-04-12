@@ -31,18 +31,22 @@ import com.rmemoria.datastream.test.model.Order;
 public class EmbeddedTest {
 
 	private StreamContext context;
+	
+	private static final String CUST_EMAIL = "email@test.com";
+	private static final String CUST_NAME = "customer name";
+	private static final Integer CUST_ID = 200;
 
 
-//	@Test
+	@Test
 	public void testEmbedded() throws Exception {
 		// create data model
 		final Order order = new Order();
 		order.setId(100);
 
 		Customer customer = new Customer();
-		customer.setEmail("email@test.com");
-		customer.setName("customer name");
-		customer.setId(200);
+		customer.setEmail(CUST_EMAIL);
+		customer.setName(CUST_NAME);
+		customer.setId(CUST_ID);
 		order.setCustomer(customer);
 
 		getContextSingleObject();
@@ -87,6 +91,10 @@ public class EmbeddedTest {
 			public void onNewObject(Object object) {
 				Class clazz = object.getClass();
 				assertEquals(clazz, Order.class);
+				Order order = (Order)object;
+				assertEquals(CUST_EMAIL, order.getCustomer().getEmail());
+				assertEquals(CUST_ID, order.getCustomer().getId());
+				assertEquals(CUST_NAME, order.getCustomer().getName());
 			}
 
 			@Override
