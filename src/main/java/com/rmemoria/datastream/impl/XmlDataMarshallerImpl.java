@@ -6,6 +6,7 @@ package com.rmemoria.datastream.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.List;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -163,8 +164,10 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 		if (includeClassElement)
 			xml.writeStartElement(cmd.getGraph().getName());
 
+		List<PropertyMetaData> props = cmd.getEndPointProperties();
+		
 		// write attributes
-		for (PropertyMetaData prop: cmd.getProperties()) {
+		for (PropertyMetaData prop: props) {
 			if ((!prop.isSerializationIgnored()) && (prop.isXmlAttribute())) {
 				Object value = prop.getValue(obj);
 				if (value != null) {
@@ -176,36 +179,33 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 		}
 
 		// write elements
-		for (PropertyMetaData prop: cmd.getProperties()) {
-			if (!prop.isSerializationIgnored()) {
+		for (PropertyMetaData prop: props) {
+			if ((!prop.isSerializationIgnored()) && (!prop.isXmlAttribute())) {
 				Object value = prop.getValue(obj);
 				if (value != null) {
-					// property must be serialized as an attribute ?
-					if (!prop.isXmlAttribute()) {
-						// serialize it as an XML element
-						xml.writeStartElement(prop.getElementName());
-						if (prop.getCompactibleTypeMetaData() != null) {
-							// serialize the object that this property points to
-							// the property is of collection type ?
-							if (prop.isCollection()) {
-								// serialize all items of the collection
-								Collection lst = (Collection)value;
-								for (Object item: lst) {
-									createXml(item, prop.getCompactibleTypeMetaData(), true);
-								}
-							}
-							else {
-								// serialize the object pointed by the collection
-								createXml(value, prop.getCompactibleTypeMetaData(), false);
+					// serialize it as an XML element
+					xml.writeStartElement(prop.getElementName());
+					if (prop.getCompactibleTypeMetaData() != null) {
+						// serialize the object that this property points to
+						// the property is of collection type ?
+						if (prop.isCollection()) {
+							// serialize all items of the collection
+							Collection lst = (Collection)value;
+							for (Object item: lst) {
+								createXml(item, prop.getCompactibleTypeMetaData(), true);
 							}
 						}
 						else {
-							String text = convertToString(value);
-							if (text != null)
-								xml.writeCharacters(text);
+							// serialize the object pointed by the collection
+							createXml(value, prop.getCompactibleTypeMetaData(), false);
 						}
-						xml.writeEndElement();
 					}
+					else {
+						String text = convertToString(value);
+						if (text != null)
+							xml.writeCharacters(text);
+					}
+					xml.writeEndElement();
 				}
 			}
 		}

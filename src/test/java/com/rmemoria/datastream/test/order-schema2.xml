@@ -3,9 +3,13 @@
 
     <objectGraph name="order" class="com.rmemoria.datastream.test.model.Order" ignorePropsNotDeclared="true">
         <property name="id" xmlAttribute="true" />
-        <property name="customer.id" xmlAttribute="true" />
-        <property name="customer.email" xmlAttribute="true" />
-        <property name="customer.name" xmlAttribute="true" />
+        <property name="customer.id" elementName="customerId" xmlAttribute="true" />
+        <property name="customer.email" elementName="email" xmlAttribute="true" />
+        <property name="customer.name" elementName="customerName" xmlAttribute="true" />
+        <property name="customer.address.street" elementName="street" /> 
+        <property name="customer.address.number" elementName="streetNumber" />
+        <property name="customer.address.area" elementName="addressArea" /> 
+        <property name="customer.address.zip" elementName="addressZip" />
     </objectGraph>
 
 </graphSchema>

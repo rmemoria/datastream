@@ -16,6 +16,7 @@ public class Customer {
 	private String name;
 	private String email;
 	private List<Order> orders = new ArrayList<Order>();
+	private Address address;
 
 	/**
 	 * @return the id
@@ -64,5 +65,17 @@ public class Customer {
 	 */
 	public void setOrders(List<Order> orders) {
 		this.orders = orders;
+	}
+	/**
+	 * @return the address
+	 */
+	public Address getAddress() {
+		return address;
+	}
+	/**
+	 * @param address the address to set
+	 */
+	public void setAddress(Address address) {
+		this.address = address;
 	}
 }

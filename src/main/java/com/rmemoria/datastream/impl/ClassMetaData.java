@@ -16,6 +16,7 @@ public class ClassMetaData {
 
 	private ObjectGraph graph;
 	private List<PropertyMetaData> properties = new ArrayList<PropertyMetaData>();
+	private List<PropertyMetaData> endpointProperties;
 	private Class graphClass;
 	private PropertyMetaData parentProperty;
 	private PropertyMetaData linkParentObject;
@@ -37,18 +38,65 @@ public class ClassMetaData {
 
 	
 	/**
+	 * Return list with all end point properties, i.e, properties with
+	 * no child element and where value must be serialized/deserialized
+	 * @return list with {@link PropertyMetaData} objects
+	 */
+	public List<PropertyMetaData> getEndPointProperties() {
+		if (endpointProperties == null) {
+			endpointProperties = new ArrayList<PropertyMetaData>();
+			for (PropertyMetaData pmd: properties) {
+				pmd.findEndpointProperties(endpointProperties);
+			}
+		}
+		return endpointProperties;
+	}
+	
+	/**
 	 * Search for a property by its element name
 	 * @param name is the element name
 	 * @return instance of {@link PropertyMetaData}, or null if no property is found
 	 */
 	public PropertyMetaData findPropertyByElementName(String name) {
-		for (PropertyMetaData prop: properties) {
+		for (PropertyMetaData prop: getEndPointProperties()) {
 			if (prop.getElementName().equals(name))
 				return prop;
 		}
 		return null;
 	}
 	
+	
+	/**
+	 * Search for a property by its name
+	 * @param name is the name of the field that represents this property
+	 * @return instance of {@link PropertyMetaData}, or null if no property is found
+	 */
+	public PropertyMetaData findPropertyByName(String name) {
+		// is a nested property ?
+		if (name.indexOf('.') > 0) { 
+			String[] props = name.split("//.");
+			PropertyMetaData pmd = findPropertyByName(props[0]);
+			if (pmd == null) {
+				return null;
+			}
+
+			for (int i = 1; i < props.length; i++) {
+				pmd = pmd.findPropertyByName(props[i]);
+				if (pmd == null) {
+					return null;
+				}
+			}
+			return pmd;
+		}
+		else {
+			// it's a single property
+			for (PropertyMetaData prop: properties) {
+				if (prop.getPropertyName().equals(name))
+					return prop;
+			}
+			return null;
+		}
+	}
 	
 	/**
 	 * If true, all properties that are not declared in schema will be ignored. Default is false

@@ -3,7 +3,6 @@
  */
 package com.rmemoria.datastream.impl;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
@@ -12,13 +11,13 @@ import java.lang.reflect.Method;
  */
 public class FieldAccess {
 
-	private Field field;
+	private String name;
 	private Method setMethod;
 	private Method getMethod;
 
-	public FieldAccess(Field field, Method getMethod, Method setMethod) {
+	public FieldAccess(String fieldName, Method getMethod, Method setMethod) {
 		super();
-		this.field = field;
+		this.name = fieldName;
 		this.setMethod = setMethod;
 		this.getMethod = getMethod;
 	}
@@ -49,18 +48,30 @@ public class FieldAccess {
 		}
 	}
 
+	
+	/**
+	 * Return true if the field can be changed
+	 * @return boolean value
+	 */
+	public boolean isWritable() {
+		return setMethod != null;
+	}
+	
+	/**
+	 * Return the class type of the field
+	 * @return Class instance
+	 */
+	public Class<?> getFieldType() {
+		return getMethod.getReturnType();
+	}
+	
 	/**
 	 * @return the field
 	 */
-	public Field getField() {
-		return field;
+	public String getName() {
+		return name;
 	}
-	/**
-	 * @param field the field to set
-	 */
-	public void setField(Field field) {
-		this.field = field;
-	}
+
 	/**
 	 * @return the setMethod
 	 */

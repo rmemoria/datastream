@@ -9,10 +9,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -27,6 +24,8 @@ import com.rmemoria.datastream.DataConverter;
 import com.rmemoria.datastream.DataStreamException;
 import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.ObjectConsumer;
+import com.rmemoria.datastream.jaxb.ObjectGraph;
+import com.rmemoria.datastream.jaxb.Property;
 import com.rmemoria.datastream.jaxb.PropertyUse;
 
 /**
@@ -205,18 +204,19 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		// get attribute values defined in the element
 		if (attributes != null) {
 			for (int i = 0; i < attributes.getLength(); i++) {
-				String propname = attributes.getQName(i);
+				String elemName = attributes.getQName(i);
 				String propvalue = attributes.getValue(i);
-				PropertyMetaData prop = currentClass.findPropertyByElementName(propname);
+				PropertyMetaData prop = currentClass.findPropertyByElementName(elemName);
 				// if the attribute is not a property, raise an exception
 				if (prop == null)
-					throw new DataStreamException(currentClass, null, getNodeHistory() +  ": Invalid element " + propname + 
+					throw new DataStreamException(currentClass, null, getNodeHistory() +  ": Invalid element " + elemName + 
 							" in node " + currentClass.getGraph().getName());
 				Class type = prop.getConvertionType();
 				DataConverter conv = context.findConverter(type);
 				Object val = conv.convertFromString(propvalue, type);
 				
-				vals.getValues().put(prop, val);
+				vals.addValue(prop.getPath(), val);
+//				vals.getValues().put(prop, val);
 			}
 		}
 	}
@@ -247,8 +247,9 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 			ObjectValues vals = objects.pop();
 			
 			checkRequiredProperties(vals);
-			
-			Object obj = createObject(vals);
+	
+			Object obj = vals.createObject(context);
+//			Object obj = createObject(vals);
 
 			// is parent node a property ?
 			if ((node != null) && (node.isPropertySelection())) {
@@ -258,15 +259,19 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				// parent property is a collection ?
 				if (prop.isCollection()) {
 					// get the collection from values
-					Collection lst = (Collection)parent.getValues().get(prop);
+
+//					Collection lst = (Collection)parent.getValues().get(prop);
+					Collection lst = (Collection)parent.getValue(prop.getPath());
 					if (lst == null) {
 						lst = new HashSet();
-						parent.getValues().put(prop, lst);
+						parent.addValue(prop.getPath(), lst);
+//						parent.getValues().put(prop, lst);
 					}
 					lst.add(obj);
 				}
 				else {
-					parent.getValues().put(prop, obj);
+//					parent.getValues().put(prop, obj);
+					parent.addValue(prop.getPath(), obj);
 					// because it's a one to one entity relationship, it moves from the current class to the parent class
 					node = node.getParent();
 				}
@@ -287,7 +292,17 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	 * @param vals
 	 */
 	private void checkRequiredProperties(ObjectValues vals) {
-		for (PropertyMetaData prop: vals.getClassMetaData().getProperties()) {
+		ObjectGraph graph = vals.getClassMetaData().getGraph();
+		for (Property prop: graph.getProperty()) {
+			if (prop.getUse() == PropertyUse.REQUIRED) {
+				Object val = vals.getValue(prop.getName());
+				if (val == null) {
+					String s = "Property '" + vals.getClassMetaData().getGraph().getName() + "."  + prop.getElementName() + "' is required";
+					throw new DataStreamException(getNodeHistory() + ": " +  s);
+				}
+			}
+		}
+/*		for (PropertyMetaData prop: vals.getClassMetaData().getProperties()) {
 			// is property required ?
 			if (prop.getProperty() != null) {
 				if ((prop.getProperty().getUse() == PropertyUse.REQUIRED) && (vals.getValues().get(prop) == null)) {
@@ -296,7 +311,7 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				}
 			}
 		}
-	}
+*/	}
 
 	/**
 	 * Create an instance of the object using the current class meta data and the list
@@ -304,10 +319,9 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	 * @param vals list of property values
 	 * @return instance of the object
 	 */
-	protected Object createObject(ObjectValues vals) {
+/*	protected Object createObject(ObjectValues vals) {
 		// create an instance of the object
 		Object obj = context.createInstance(vals.getClassMetaData().getGraphClass(), getObjectAttributes(vals));
-//		Object obj = context.createInstance(currentClass.getGraphClass(), getObjectAttributes(vals));
 
 		// set the values of the properties
 		List<PropertyValues> props = vals.groupProperties();
@@ -316,21 +330,21 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		}
 		return obj;
 	}
-	
+*/	
 	
 	/**
 	 * Mount the list of properties for the creation of the object
 	 * @param vals
 	 * @return
 	 */
-	protected Map<String, Object> getObjectAttributes(ObjectValues vals) {
+/*	protected Map<String, Object> getObjectAttributes(ObjectValues vals) {
 		Map<String, Object> props = new HashMap<String, Object>();
 		for (PropertyMetaData prop: vals.getValues().keySet()) {
 			props.put(prop.getPath(), vals.getValues().get(prop));
 		}
 		return props;
 	}
-	
+*/	
 	
 	/**
 	 * Called by SAX when reading the content of an XML element
@@ -351,7 +365,8 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 			DataConverter conv = context.findConverter(type);
 			Object val = conv.convertFromString(value, type);
 			ObjectValues vals = objects.pop();
-			vals.getValues().put(prop, val);
+			vals.addValue(prop.getPath(), val);
+//			vals.getValues().put(prop, val);
 			objects.push(vals);
 			return;
 		}
@@ -375,14 +390,14 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				s += ", ";
 			}
 			s += obj.getClassMetaData().getGraph().getName();
-			if ((obj.getValues() != null) && (obj.getValues().size() > 0)) {
+			if ((obj.getProperties() != null) && (obj.getProperties().size() > 0)) {
 				String text = "";
-				for (PropertyMetaData prop: obj.getValues().keySet()) {
+				for (PropertyValue prop: obj.getProperties()) {
 					if (!text.isEmpty()) {
 						text += ", ";
 					}
-					String propname = prop.getProperty().getElementName() != null? prop.getProperty().getElementName(): prop.getProperty().getName();
-					text += propname + "=" + obj.getValues().get(prop);
+					String propname = prop.getProperty().getElementName() != null? prop.getProperty().getElementName(): prop.getProperty().getPropertyName();
+					text += propname + "=" + prop.getValue();
 				}
 				s += "[" + text + "]"; 
 			}

@@ -3,8 +3,10 @@
  */
 package com.rmemoria.datastream.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.rmemoria.datastream.StreamContext;
@@ -19,18 +21,42 @@ import com.rmemoria.datastream.jaxb.PropertyUse;
  */
 public class PropertyMetaData {
 
+	private PropertyMetaData parent;
 	private ClassMetaData classMetaData;
 	private Property property;
-	private FieldAccess field;
-	private FieldAccess[] subfields;
+	private FieldAccess fieldAccess;
+//	private FieldAccess[] subfields;
 	private ClassMetaData typeMetaData;
 	private ClassMetaData compactibleTypeMetaData;
 	private boolean compactibleTypeChecked = false;
+	private List<PropertyMetaData> properties;
 
+	
 	public PropertyMetaData(ClassMetaData classMetaData) {
+		super();
 		this.classMetaData = classMetaData;
 	}
 
+	
+	public List<PropertyMetaData> getProperties() {
+		return properties;
+	}
+	
+	/**
+	 * Search from this property all properties that are end point, i.e, with
+	 * no child, and add in the given list
+	 * @param props
+	 */
+	public void findEndpointProperties(List<PropertyMetaData> props) {
+		if (properties == null) {
+			props.add(this);
+			return;
+		}
+		
+		for (PropertyMetaData pmd: properties) {
+			pmd.findEndpointProperties(props);
+		}
+	}
 	
 	/**
 	 * Return the element name of the tag
@@ -43,22 +69,94 @@ public class PropertyMetaData {
 				return property.getName();
 			else return elem;
 		}
-		else return field.getField().getName();
+		else return fieldAccess.getName();
 	}
 
 	
+	/**
+	 * Search for a child property by its name
+	 * @param name
+	 * @return
+	 */
+	public PropertyMetaData findPropertyByName(String name) {
+		if (properties == null) {
+			return null;
+		}
+
+		for (PropertyMetaData pmd: properties) {
+			if (pmd.getPropertyName().equals(name)) {
+				return pmd;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Return the path of the property in the class, containing the properties
 	 * separated by dot to access the value
 	 * @return String value
 	 */
 	public String getPath() {
-		if (property != null)
-			 return property.getName();
-		else return field.getField().getName();
+		String s = getPropertyName();
+		if (parent != null) {
+			s = parent.getPath() + "." + s;
+		}
+		return s;
+	}
+	
+	
+	/**
+	 * Return the path of the property until the parent is reached
+	 * @param parent
+	 * @return
+	 */
+	public String getPath(PropertyMetaData parentProp) {
+		String s = getPropertyName();
+		if ((parent != null) && (parent != parentProp)) {
+			s = parent.getPath(parentProp) + "." + s;
+		}
+		return s;
+	}
+	
+	
+	/**
+	 * Return the name of the property
+	 * @return
+	 */
+	public String getPropertyName() {
+		return fieldAccess.getName();
 	}
 
+	
+	/**
+	 * Return the type of the property
+	 * @return Class instance
+	 */
+	public Class<?> getPropertyType() {
+		return fieldAccess.getFieldType();
+	}
+	
+	
+	/**
+	 * Add a property as a child of this property
+	 * @param prop
+	 */
+	protected void addProperty(PropertyMetaData prop) {
+		if (properties == null) {
+			properties = new ArrayList<PropertyMetaData>();
+		}
+		properties.add(prop);
+		prop.setParent(this);
+	}
 
+	/**
+	 * Set the parent property
+	 * @param parent
+	 */
+	protected void setParent(PropertyMetaData parent) {
+		this.parent = parent;
+	}
+	
 	/**
 	 * Set the value of the property for the given object in the current context
 	 * @param context implementation of {@link StreamContext} 
@@ -67,7 +165,7 @@ public class PropertyMetaData {
 	 * @param forceObjectValue if true, and if value is not null, the getFieldAccessObject won't call the 
 	 * 		client to generate a new value, but use the value provided in the method argument
 	 */
-	public void setValue(StreamContext context, Object obj, Object value, boolean forceObjectValue) {
+/*	public void setValue(StreamContext context, Object obj, Object value, boolean forceObjectValue) {
 		PropertyMetaData linkprop = getTypeMetaData() != null? getTypeMetaData().getLinkParentObject() : null;
 
 		// is a collection ?
@@ -108,9 +206,9 @@ public class PropertyMetaData {
 			linkprop.setValue(context, value, obj, true);
 		}
 	}
-
+*/
 	
-	private String getPropertyName(int index) {
+/*	private String getPropertyName(int index) {
 		String s = "";
 		for (int i = index; i < subfields.length; i++) {
 			if (!s.isEmpty())
@@ -119,7 +217,7 @@ public class PropertyMetaData {
 		}
 		return s;
 	}
-	
+*/	
 	/**
 	 * Return the value for the given object and its {@link FieldAccess}. If the field value is
 	 * null, then a new instance is created with the given context
@@ -137,7 +235,7 @@ public class PropertyMetaData {
 		if ((currentValue != null) && (currentValue instanceof Collection)) {
 			return currentValue;
 		}
-		Class type = fa.getField().getType();
+		Class type = fa.getFieldType();
 		Map<String, Object> params = null;
 		if (propvalue != null) {
 			params = new HashMap<String, Object>();
@@ -170,10 +268,11 @@ public class PropertyMetaData {
 	 * @return instance of the Class type 
 	 */
 	public Class getConvertionType() {
-		if (subfields == null)
+		return fieldAccess.getFieldType();
+/*		if (subfields == null)
 			 return field.getField().getType();
 		else return subfields[subfields.length - 1].getField().getType();
-	}
+*/	}
 	
 	/**
 	 * Indicate if the serialization is to be ignored
@@ -183,7 +282,7 @@ public class PropertyMetaData {
 		if (isIgnored())
 			return true;
 
-		String s = property != null? property.getName(): field.getField().getName();
+		String s = getPropertyName();
 		return s.equals(classMetaData.getGraph().getParentProperty());
 	}
 	
@@ -201,7 +300,8 @@ public class PropertyMetaData {
 	 * @return true if it's a composed field, or false if it's not 
 	 */
 	public boolean isComposed() {
-		return subfields != null;
+		return properties != null;
+//		return subfields != null;
 	}
 	
 	/**
@@ -211,7 +311,8 @@ public class PropertyMetaData {
 	public boolean isCollection() {
 		return Collection.class.isAssignableFrom( getConvertionType() );
 	}
-	
+
+
 	
 	/**
 	 * Return the collection of a property that represents a collection of object for
@@ -221,13 +322,13 @@ public class PropertyMetaData {
 	 * @return
 	 */
 	public Collection getCollectionObject(StreamContext context, Object obj) {
-		Object value = getFieldAccessObject(context, field, obj, null, null, false);
-		if (subfields != null) {
+		Object value = getFieldAccessObject(context, fieldAccess, obj, null, null, false);
+/*		if (subfields != null) {
 			for (FieldAccess fa: subfields) {
 				value = getFieldAccessObject(context, fa, value, null, null, false);
 			}
 		}
-		return (Collection)value;
+*/		return (Collection)value;
 	}
 	
 	/**
@@ -235,7 +336,12 @@ public class PropertyMetaData {
 	 * @return true if should be ignored
 	 */
 	public boolean isIgnored() {
-		return (property != null) && (property.getUse() == PropertyUse.IGNORE);
+		if (property != null) {
+			return property.getUse() == PropertyUse.IGNORE;
+		}
+		else {
+			return classMetaData.isNotDeclaredPropsIgnored();
+		}
 	}
 	
 	/**
@@ -244,8 +350,28 @@ public class PropertyMetaData {
 	 * @return property value
 	 */
 	public Object getValue(Object obj) {
-		Object val = field.getValue(obj);
-		if (val == null)
+//		Object val = fieldAccess.getValue(obj);
+
+		// if there is no parent property, so return its property value from the object
+		if (parent == null) {
+			return fieldAccess.getValue(obj);
+		}
+		
+		// create list of all parents including the own property
+		List<PropertyMetaData> props = new ArrayList<PropertyMetaData>();
+		PropertyMetaData p = this;
+		while (p != null) {
+			props.add(p);
+			p = p.getParent();
+		}
+		
+		// read from the first parent (the last in the list) to this property (the first included)
+		Object val = obj;
+		for (int i = props.size() - 1; i >= 0; i--) {
+			val = props.get(i).getFieldAccess().getValue(val);
+		}
+		
+/*		if (val == null)
 			return null;
 
 		if (subfields != null) {
@@ -255,13 +381,13 @@ public class PropertyMetaData {
 					return null;
 			}
 		}
-		return val;
+*/		return val;
 	}
 	
 	
 	@Override
 	public String toString() {
-		return classMetaData.getGraph().getClazz() + "." + (property != null? property.getName(): field.getField().getName());
+		return classMetaData.getGraph().getClazz() + "." + getPath();
 	}
 	
 	/**
@@ -286,31 +412,31 @@ public class PropertyMetaData {
 	/**
 	 * @return the simpleField
 	 */
-	public FieldAccess getField() {
-		return field;
+	public FieldAccess getFieldAccess() {
+		return fieldAccess;
 	}
 
 	/**
 	 * @param simpleField the simpleField to set
 	 */
-	public void setField(FieldAccess field) {
-		this.field = field;
+	public void setFieldAccess(FieldAccess field) {
+		this.fieldAccess = field;
 	}
 
 	/**
 	 * @return the subfields
 	 */
-	public FieldAccess[] getSubfields() {
+/*	public FieldAccess[] getSubfields() {
 		return subfields;
 	}
-
+*/
 	/**
 	 * @param composedFields the composedFields to set
 	 */
-	public void setSubfields(FieldAccess[] subfields) {
+/*	public void setSubfields(FieldAccess[] subfields) {
 		this.subfields = subfields;
 	}
-
+*/
 	/**
 	 * @return the typeMetaData
 	 */
@@ -323,6 +449,13 @@ public class PropertyMetaData {
 	 */
 	public void setTypeMetaData(ClassMetaData typeMetaData) {
 		this.typeMetaData = typeMetaData;
+	}
+
+	/**
+	 * @return the parent
+	 */
+	public PropertyMetaData getParent() {
+		return parent;
 	}
 
 }

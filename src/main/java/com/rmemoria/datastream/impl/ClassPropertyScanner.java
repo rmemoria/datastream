@@ -5,10 +5,7 @@ package com.rmemoria.datastream.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
-import com.rmemoria.datastream.DataStreamException;
 import com.rmemoria.datastream.jaxb.ObjectCollection;
 import com.rmemoria.datastream.jaxb.ObjectGraph;
 import com.rmemoria.datastream.jaxb.Property;
@@ -23,7 +20,7 @@ import com.rmemoria.datastream.jaxb.Property;
  */
 public class ClassPropertyScanner {
 
-	private StreamContextImpl context;
+//	private StreamContextImpl context;
 //	private ClassMetaData classMetaData;
 	
 	/**
@@ -32,7 +29,7 @@ public class ClassPropertyScanner {
 	 * @return {@link CollectionMetaData} with information about the collection
 	 */
 	public CollectionMetaData scan(StreamContextImpl context, ObjectCollection collection) {
-		this.context = context;
+//		this.context = context;
 		CollectionMetaData lst = new CollectionMetaData(collection);
 		for (ObjectGraph graph: collection.getObjectGraph()) {
 			ClassMetaData cmd = scan(context, graph);
@@ -48,7 +45,7 @@ public class ClassPropertyScanner {
 	 * @return
 	 */
 	public ClassMetaData scan(StreamContextImpl context, ObjectGraph graph) {
-		this.context = context;
+//		this.context = context;
 		// get the class
 		Class clazz;
 		try {
@@ -58,25 +55,104 @@ public class ClassPropertyScanner {
 		}
 		ClassMetaData classMetaData = new ClassMetaData(context, graph, clazz);
 		
+		// add properties declared in the XML
 		for (Property property: graph.getProperty()) {
-			PropertyMetaData p = new PropertyMetaData(classMetaData);
-			p.setProperty(property);
-			classMetaData.addProperty(p);
+			createPropertyFromXML(classMetaData, property);
 		}
 		
+		// scan the class for other fields
 		scanClass(classMetaData, clazz);
+		
+		checkParentProperty(classMetaData);
 
 		// update composed fields 
-		for (PropertyMetaData prop: classMetaData.getProperties()) {
+/*		for (PropertyMetaData prop: classMetaData.getProperties()) {
 			if (prop.getField() == null)
 				updateComposedFields(prop);
 			
 			if (prop.getField() == null)
 				throw new IllegalArgumentException("Property not found: " + prop);
 		}
+*/
+
+		// is the field type being "graphed" too?
 
 		return classMetaData;
 	}
+
+	
+	protected void checkParentProperty(ClassMetaData classMetaData) {
+		String parentprop = classMetaData.getGraph().getParentProperty();
+		if (parentprop == null) {
+			return;
+		}
+		// search all declared fields for the property
+		PropertyMetaData aux = classMetaData.findPropertyByName(parentprop);
+		if (aux == null) {
+			aux = new PropertyMetaData(classMetaData);
+			aux.setFieldAccess( createFieldAccess(classMetaData.getGraphClass(), parentprop));
+			classMetaData.addProperty(aux);
+		}
+
+/*		if (aux == null) 
+			throw new IllegalArgumentException("The parent property " + parentprop + 
+					" was not found in class " + classMetaData.getGraphClass().getName());
+		if (aux.isComposed())
+			throw new IllegalArgumentException("The parent property " + parentprop + 
+					" is already defined inside the graph for " + classMetaData.getGraphClass().getName());
+*/		
+		classMetaData.setLinkParentObject( aux );
+	}
+	
+	/**
+	 * Create a property meta data from a property declared in the XML file
+	 * @param cmd
+	 * @param property
+	 * @return
+	 */
+	protected PropertyMetaData createPropertyFromXML(ClassMetaData cmd, Property property) {
+		String[] props = property.getName().split("\\.");
+		PropertyMetaData prop = cmd.findPropertyByName(props[0]);
+		if (prop == null) {
+			prop = new PropertyMetaData(cmd);
+			prop.setFieldAccess( createFieldAccess(cmd.getGraphClass(), props[0]) );
+			cmd.addProperty(prop);
+		}
+
+		// if the property is a composed property, follow all nested properties
+		if (props.length > 1) {
+			PropertyMetaData parent = prop;
+			for (int i = 1; i < props.length; i++) {
+				PropertyMetaData child = parent.findPropertyByName(props[i]);
+				if (child == null) {
+					child = new PropertyMetaData(cmd);
+					child.setFieldAccess( createFieldAccess(parent.getPropertyType(), props[i]));
+					parent.addProperty(child);
+				}
+				parent = child;
+			}
+			parent.setProperty(property);
+		}
+		else {
+			prop.setProperty(property);
+		}
+
+		// is the field type being "graphed" too?
+		if ((prop.getProperty() != null) && (prop.getProperty().getObjectGraph() != null)) {
+			if (prop.getProperty().isXmlAttribute())
+				throw new IllegalArgumentException("Property that contains a graph definition cannot be used as an XML attribute: " + prop);
+
+			// composed property cannot have a class graph definition
+			if (prop.isComposed())
+				throw new IllegalArgumentException("Composed property cannot point to a graph definition: " + prop);
+			ClassMetaData cmdProp = scan(cmd.getContext(), prop.getProperty().getObjectGraph());
+			prop.setTypeMetaData(cmdProp);
+			cmdProp.setParentProperty(prop);
+		}
+
+		return prop;
+	}
+
 	
 
 	/**
@@ -86,37 +162,23 @@ public class ClassPropertyScanner {
 	protected void scanClass(ClassMetaData classMetaData, Class clazz) {
 		scanRecursive(classMetaData, clazz);
 		
-		// check information about the parent property in the object graph
-		String parentprop = classMetaData.getGraph().getParentProperty();
-		if (parentprop != null) {
-			// search all declared fields for the property
-			PropertyMetaData aux = null;
-			for (PropertyMetaData prop: classMetaData.getProperties()) {
-				if ((prop.getField() != null) && (prop.getField().getField().getName().equals(parentprop))) {
-					aux = prop;
-					break;
-				}
-			}
-			if (aux == null) 
-				throw new IllegalArgumentException("The parent property " + parentprop + 
-						" was not found in class " + classMetaData.getGraphClass().getName());
-			if (aux.isComposed())
-				throw new IllegalArgumentException("The parent property " + parentprop + 
-						" is already defined inside the graph for " + classMetaData.getGraphClass().getName());
-			classMetaData.setLinkParentObject( aux );
-		}
 	}
 	
 	
 	/**
-	 * Scan for properties recursivelly by the super classes of the class
+	 * Scan for properties recursively by the super classes of the class
 	 * @param classMetaData
 	 * @param clazz
 	 */
 	private void scanRecursive(ClassMetaData classMetaData, Class clazz) {
 		Field[] fields = clazz.getDeclaredFields();
 		for (Field field: fields) {
-			addField(classMetaData, clazz, field);
+			PropertyMetaData p = classMetaData.findPropertyByName(field.getName());
+			if (p == null) {
+				p = new PropertyMetaData(classMetaData);
+				classMetaData.addProperty(p);
+				p.setFieldAccess( createFieldAccess(clazz, field.getName()) );
+			}
 		}
 		
 		clazz = clazz.getSuperclass();
@@ -131,7 +193,7 @@ public class ClassPropertyScanner {
 	 * @param clazz
 	 * @param field
 	 */
-	private void addField(ClassMetaData classMetaData, Class clazz, Field field) {
+/*	private void addField(ClassMetaData classMetaData, Class clazz, Field field) {
 		List<PropertyMetaData> lst = findPropertyByFieldName(classMetaData, field.getName());
 		
 		if (lst.size() > 0) {
@@ -148,7 +210,7 @@ public class ClassPropertyScanner {
 			}
 		}
 	}
-	
+*/	
 	
 	/**
 	 * Initialize the values of the properties according to its field and other
@@ -157,7 +219,7 @@ public class ClassPropertyScanner {
 	 * @param field
 	 * @return
 	 */
-	protected boolean initializeProperty(PropertyMetaData prop, Field field) {
+/*	protected boolean initializeProperty(PropertyMetaData prop, Field field) {
 		FieldAccess fa = createFieldAccess(field);
 		if (fa == null) {
 			if (prop.getProperty() != null)
@@ -192,6 +254,7 @@ public class ClassPropertyScanner {
 
 		return true;
 	}
+*/
 	
 	/**
 	 * Search for a property by its field name. It returns a property even if it's a composed field
@@ -199,7 +262,7 @@ public class ClassPropertyScanner {
 	 * @param name
 	 * @return
 	 */
-	private List<PropertyMetaData> findPropertyByFieldName(ClassMetaData classMetaData, String name) {
+/*	private List<PropertyMetaData> findPropertyByFieldName(ClassMetaData classMetaData, String name) {
 		List<PropertyMetaData> lst = new ArrayList<PropertyMetaData>();
 		for (PropertyMetaData prop: classMetaData.getProperties()) {
 			String s = prop.getProperty() != null ? prop.getProperty().getName(): null;
@@ -214,42 +277,42 @@ public class ClassPropertyScanner {
 		}
 		return lst;
 	}
-	
+*/
+
 	/**
 	 * Get the read and write methods of the field
 	 * @param field
 	 * @return
 	 */
-	protected FieldAccess createFieldAccess(Field field) {
-		String name = field.getName();
+	protected FieldAccess createFieldAccess(Class clazz, String fieldname) {
 		// check if field is readable and writable
-		name = Character.toUpperCase( name.charAt(0) ) + name.substring(1);
-		
-		// set the method names
-		String getMethod;
-		if (field.getType() == boolean.class)
-			 getMethod = "is" + name;
-		else getMethod = "get" + name;
-		String setMethod = "set" + name;
-		
-		Class clazz = field.getDeclaringClass();
+		String name = Character.toUpperCase( fieldname.charAt(0) ) + fieldname.substring(1);
 
+		// get the "get" method
 		Class[] param1 = {};
-		Class[] param2 = {field.getType()};
+		Method get = getDeclaredMethod(clazz, "get" + name, param1);
+		if (get == null) {
+			get = getDeclaredMethod(clazz, "is" + name, param1);
+		}
+		
+		if (get == null) {
+			throw new RuntimeException("Property not found: " + fieldname);
+		}
+		
+		Class type = get.getReturnType();
 
-		Method get = getDeclaredMethod(clazz, getMethod, param1);
-		Method set = getDeclaredMethod(clazz, setMethod, param2);
-		if ((get == null) || (set == null))
-			return null;
+		Class[] param2 = {type};
 
-		return new FieldAccess(field, get, set);
+		Method set = getDeclaredMethod(clazz, "set" + name, param2);
+
+		return new FieldAccess(fieldname, get, set);
 	}
 	
 	/**
 	 * Update information of a composite field path
 	 * @param field
 	 */
-	protected void updateComposedFields(PropertyMetaData prop) {
+/*	protected void updateComposedFields(PropertyMetaData prop) {
 		String path = prop.getProperty().getName();
 		try {
 			String[] props = path.split("\\.");
@@ -275,7 +338,7 @@ public class ClassPropertyScanner {
 			throw new RuntimeException(e);
 		}
 	}
-	
+*/	
 	/**
 	 * Create the methods to access a property in a class, and raise an exception
 	 * if the methods to read and/or write are not available
@@ -283,13 +346,13 @@ public class ClassPropertyScanner {
 	 * @param field
 	 * @return
 	 */
-	protected FieldAccess createFieldAccessNotNull(PropertyMetaData prop, Field field) {
+/*	protected FieldAccess createFieldAccessNotNull(PropertyMetaData prop, Field field) {
 		FieldAccess fa = createFieldAccess(field);
 		if (fa == null)
 			throw new DataStreamException("Missing methods get/set for property " + field.getName() + " of " + prop);
 		return fa;
 	}
-
+*/
 	
 	/**
 	 * Return the declared field in the class or in a super class 
@@ -325,6 +388,9 @@ public class ClassPropertyScanner {
 				return clazz.getDeclaredMethod(metname, params);
 			} catch (NoSuchMethodException e) {
 				clazz = clazz.getSuperclass();
+				if (clazz != null) {
+					return getDeclaredMethod(clazz, metname, params);
+				}
 			}
 		}
 		return null;
