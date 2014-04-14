@@ -6,10 +6,11 @@
         <property name="customer.id" elementName="customerId" xmlAttribute="true" />
         <property name="customer.email" elementName="email" xmlAttribute="true" />
         <property name="customer.name" elementName="customerName" xmlAttribute="true" />
-        <property name="customer.address.street" elementName="street" /> 
+        <property name="customer.address.street" elementName="street" use="REQUIRED"/> 
         <property name="customer.address.number" elementName="streetNumber" />
         <property name="customer.address.area" elementName="addressArea" /> 
         <property name="customer.address.zip" elementName="addressZip" />
+        <property name="customer.address2.street" elementName="street2" /> 
     </objectGraph>
 
 </graphSchema>

@@ -345,7 +345,7 @@ public class PropertyMetaData {
 	}
 	
 	/**
-	 * Return the value of the property for the given object
+	 * Return the value of the property path for the given object
 	 * @param obj is the object to get the property value from
 	 * @return property value
 	 */
@@ -369,6 +369,9 @@ public class PropertyMetaData {
 		Object val = obj;
 		for (int i = props.size() - 1; i >= 0; i--) {
 			val = props.get(i).getFieldAccess().getValue(val);
+			if (val == null) {
+				return null;
+			}
 		}
 		
 /*		if (val == null)

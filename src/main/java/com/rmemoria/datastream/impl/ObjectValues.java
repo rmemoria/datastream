@@ -70,7 +70,7 @@ public class ObjectValues {
 	 * @return instance of {@link Object} class
 	 */
 	public Object getValue(String propname) {
-		String[] props = propname.split("//.");
+		String[] props = propname.split("\\.");
 		PropertyValue val = null;
 		for (String pname: props) {
 			if (val == null) {

@@ -175,9 +175,12 @@ public class ClassPropertyScanner {
 		for (Field field: fields) {
 			PropertyMetaData p = classMetaData.findPropertyByName(field.getName());
 			if (p == null) {
-				p = new PropertyMetaData(classMetaData);
-				classMetaData.addProperty(p);
-				p.setFieldAccess( createFieldAccess(clazz, field.getName()) );
+				FieldAccess fa = createFieldAccess(clazz, field.getName());
+				if (fa != null) {
+					p = new PropertyMetaData(classMetaData);
+					classMetaData.addProperty(p);
+					p.setFieldAccess( fa );
+				}
 			}
 		}
 		
@@ -296,7 +299,7 @@ public class ClassPropertyScanner {
 		}
 		
 		if (get == null) {
-			throw new RuntimeException("Property not found: " + fieldname);
+			return null;
 		}
 		
 		Class type = get.getReturnType();

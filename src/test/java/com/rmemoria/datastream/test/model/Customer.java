@@ -12,11 +12,15 @@ import java.util.List;
  */
 public class Customer {
 
+	// this field is just to be ignored by the property scanner
+	public int TEST_FIELD = 0;
+	
 	private Integer id;
 	private String name;
 	private String email;
 	private List<Order> orders = new ArrayList<Order>();
 	private Address address;
+	private Address address2;
 
 	/**
 	 * @return the id
@@ -77,5 +81,17 @@ public class Customer {
 	 */
 	public void setAddress(Address address) {
 		this.address = address;
+	}
+	/**
+	 * @return the address2
+	 */
+	public Address getAddress2() {
+		return address2;
+	}
+	/**
+	 * @param address2 the address2 to set
+	 */
+	public void setAddress2(Address address2) {
+		this.address2 = address2;
 	}
 }
