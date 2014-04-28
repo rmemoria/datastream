@@ -6,19 +6,24 @@ package com.rmemoria.datastream.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
+import com.rmemoria.datastream.CustomPropertiesReader;
 import com.rmemoria.datastream.DataConverter;
 import com.rmemoria.datastream.DataMarshaller;
 import com.rmemoria.datastream.DataStreamException;
 import com.rmemoria.datastream.ObjectProvider;
 
 /**
- * Implementation of the {@link DataMarshaller} interface for XML data type
+ * Implementation of the {@link DataMarshaller} interface for XML data type.
+ * Generates an XML file from an object or a list of objects
  * 
  * @author Ricardo Memoria
  *
@@ -27,6 +32,7 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 
 	private StreamContextImpl context;
 	private XMLStreamWriter xml;
+	private Set<CustomPropertiesReader> propReaders;
 	
 	/**
 	 * Default constructor
@@ -165,7 +171,7 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 			xml.writeStartElement(cmd.getGraph().getName());
 
 		List<PropertyMetaData> props = cmd.getEndPointProperties();
-		
+
 		// write attributes
 		for (PropertyMetaData prop: props) {
 			if ((!prop.isSerializationIgnored()) && (prop.isXmlAttribute())) {
@@ -210,19 +216,87 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 			}
 		}
 
+		handleCustomProperties(obj, cmd);
+		
 		if (includeClassElement)
 			xml.writeEndElement();
 	}
+
+
+	/**
+	 * Handle possible custom properties defined for the given object. In order to include custom
+	 * properties, it's necessary to define the node name (in the XML schema, as customPropertiesNode)
+	 * and implement the interface {@link CustomPropertiesReader} 
+	 * @param obj
+	 * @param cmd
+	 * @throws XMLStreamException
+	 */
+	protected void handleCustomProperties(Object obj, ClassMetaData cmd) throws XMLStreamException {
+		// any custom node was defined for this object graph?
+		String node = cmd.getGraph().getCustomPropertiesNode();
+		if (node == null) {
+			return;
+		}
+		
+		// get custom properties
+		Map<String, Object> props = getCustomProperties(obj);
+		if (props == null) {
+			return;
+		}
+
+		// create new node for custom objects
+		xml.writeStartElement(node);
+		for (String propname: props.keySet()) {
+			Object value = props.get(propname);
+			if (value != null) {
+				// start new element inside the custom node
+				xml.writeStartElement(propname);
+				// write custom element
+				String text = convertToString(value);
+				if (text != null) {
+					xml.writeCharacters(text);
+				}
+				xml.writeEndElement();
+			}
+		}
+		xml.writeEndElement();
+	}
 	
-	
+	/**
+	 * Return the custom property values from the given object
+	 * @param object the object to get the custom properties from
+	 * @return map containing property names and its value
+	 */
+	protected Map<String, Object> getCustomProperties(Object object) {
+		// is there any property reader defined?
+		if (propReaders == null) {
+			return null;
+		}
+
+		// get values from all property readers defined
+		Map<String, Object> customProps = null;
+		for (CustomPropertiesReader propReader: propReaders) {
+			Map<String, Object> values = propReader.readCustomProperties(object);
+			if (customProps == null) {
+				customProps = values;
+			}
+			else {
+				customProps.putAll(values);
+			}
+		}
+		return customProps;
+	}
+
+
+	/**
+	 * Finish the XML document marshall 
+	 */
 	public void finishMarshall() {
 		if (xml == null)
 			throw new DataStreamException("Object marshall must be initialized before being finished");
 		
 		try {
-/*			if (rootElementName != null)
-				xml.writeEndElement();
-*/			xml.writeEndDocument();
+			xml.writeEndDocument();
 			xml.flush();
 			xml = null;
 		} catch (Exception e) {
@@ -238,5 +312,25 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 	protected String convertToString(Object value) {
 		DataConverter conv = context.findConverter(value.getClass());
 		return conv.convertToString(value);
+	}
+
+	/** {@inheritDoc}
+	 */
+	@Override
+	public void addPropertyReader(CustomPropertiesReader reader) {
+		if (propReaders == null)  {
+			propReaders = new HashSet<CustomPropertiesReader>();
+		}
+		propReaders.add(reader);
+	}
+
+	/** {@inheritDoc}
+	 */
+	@Override
+	public void removePropertyReader(CustomPropertiesReader reader) {
+		if (propReaders == null) {
+			return;
+		}
+		propReaders.remove(reader);
 	}
 }

@@ -9,7 +9,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -20,6 +23,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.rmemoria.datastream.CustomPropertiesWriter;
 import com.rmemoria.datastream.DataConverter;
 import com.rmemoria.datastream.DataStreamException;
 import com.rmemoria.datastream.DataUnmarshaller;
@@ -42,15 +46,29 @@ import com.rmemoria.datastream.jaxb.PropertyUse;
  */
 public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 
+	/**
+	 * These are the possible node types being read  
+	 */
+	public enum NodeType { ROOT, CLASS, PROPERTY, CUSTOM_PROPERTIES; };
+
+
 	private StreamContextImpl context;
 	private CollectionMetaData currentCollection;
 	private Collection results;
 	private ObjectConsumer consumer;
 	// indicate the current node selection
 	private NodeSelection node;
+	private List<CustomPropertiesWriter> propWriters;
 	
 	private Deque<ObjectValues> objects = new ArrayDeque<ObjectValues>();
+	private Map<String, String> customProperties;
+	private String customPropName;
+
 	
+	/**
+	 * Default constructor, receiving the context as parameter
+	 * @param context instance of the {@link StreamContextImpl}
+	 */
 	public XmlDataUnmarshallerImpl(StreamContextImpl context) {
 		this.context = context;
 	}
@@ -61,7 +79,7 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	public Object unmarshall(InputStream xmlstream) {
 		// this collection will receive the objects
 		results = new ArrayList();
-
+		
 		startParse(xmlstream);
 
 		// if it's a list defined in the schema as the root element, so returns the result list
@@ -138,45 +156,68 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	 */
 	protected void saxStartElement(String name, Attributes attributes) {
 		// is the first node?
-		if (node == null) {
-			// check if it's the collection node
-			if ((currentCollection == null) && (context.getCollectionMetaData() != null)) {
-				// get information about the collection
-				currentCollection = context.getCollectionMetaData();
-				// if the node name is not the same as expected, raise an error
-				String collname = currentCollection.getObjectCollection().getName();
-				if (!collname.equals(name))
-					throw new DataStreamException(getNodeHistory() +  ": Expected element '" + collname + "' but found '" + name + "'");
-			}
-			else {
-				// initialize the node for the first selection, which must be a class
-				ClassMetaData cmd = context.findClassByElement(name);
-				if (cmd == null)
-					throw new DataStreamException(getNodeHistory() + ": No class mapped for element " + name);
-				node = new NodeSelection(null, cmd);
-				startClass(attributes);
-				if (consumer != null)
-					consumer.startObjectReading(cmd.getGraphClass());
-			}
-			return;
+		NodeType nodeType = getNodeType();
+
+		switch (nodeType) {
+		case ROOT:
+			startRootNode(name, attributes);
+			break;
+		case CLASS: // it means that the current selection is a class, so the new element being read is a property
+			startPropertyNode(name, attributes);
+			break;
+		case PROPERTY:
+			startClassNode(name, attributes);
+			break;
+		case CUSTOM_PROPERTIES:
+			startCustomPropertiesNode(name, attributes);
 		}
+	}
 
-		// new element being read is a PROPERTY? (it is if the current selection is a class)
-		if (node.isClassSelection()) {
-			PropertyMetaData prop = node.getClassMetaData().findPropertyByElementName(name);
-			if (prop == null)
-				throw new DataStreamException(node.getClassMetaData(), null, getNodeHistory() + ": Invalid element " + name + 
-						" in node " + node.getClassMetaData().getGraph().getName());
 
-			node = new NodeSelection(node, prop);
-			// is an one-to-one relationship between objects ?
-			if ((prop.getCompactibleTypeMetaData() != null) && (!prop.isCollection())) {
-				node = new NodeSelection(node, prop.getCompactibleTypeMetaData());
-				startClass(attributes);
-			}
-			return;
+	/**
+	 * Called when the current node is a custom property of the object
+	 * @param name
+	 * @param attributes
+	 */
+	protected void startCustomPropertiesNode(String name, Attributes attributes) {
+		customPropName = name;
+	}
+
+	
+	/**
+	 * Called when the root node in the XML document is being read 
+	 * @param name is the root node name in the XML document
+	 * @param attributes is the list of attributes declared in the node, if available
+	 */
+	protected void startRootNode(String name, Attributes attributes) {
+		// check if it's the collection node
+		if ((currentCollection == null) && (context.getCollectionMetaData() != null)) {
+			// get information about the collection
+			currentCollection = context.getCollectionMetaData();
+			// if the node name is not the same as expected, raise an error
+			String collname = currentCollection.getObjectCollection().getName();
+			if (!collname.equals(name))
+				throw new DataStreamException(getNodeHistory() +  ": Expected element '" + collname + "' but found '" + name + "'");
 		}
-
+		else {
+			// initialize the node for the first selection, which must be a class
+			ClassMetaData cmd = context.findClassByElement(name);
+			if (cmd == null)
+				throw new DataStreamException(getNodeHistory() + ": No class mapped for element " + name);
+			node = new NodeSelection(null, cmd);
+			startClass(attributes);
+			if (consumer != null)
+				consumer.startObjectReading(cmd.getGraphClass());
+		}
+	}
+	
+	
+	/**
+	 * Called when reading an XML node which is an object structure
+	 * @param name is the XML node name
+	 * @param attributes is the list of attributes, if available, declared in the XML node
+	 */
+	protected void startClassNode(String name, Attributes attributes) {
 		// is a property node ?
 		// it's an entity pointed in a property
 		// if there is no type defined in the property, so there is an error
@@ -190,10 +231,36 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		startClass(attributes);
 	}
 
+
+	/**
+	 * Called when reading an XML node which is a property value
+	 * @param name is the XML node name
+	 * @param attributes is the list of attributes, if available, declared in the XML node
+	 */
+	protected void startPropertyNode(String name, Attributes attributes) {
+		// is this node a custom property node?
+		if (name.equals(node.getClassMetaData().getGraph().getCustomPropertiesNode())) {
+			customProperties = new HashMap<String, String>();
+		}
+		else {
+			// it's another property being handled
+			PropertyMetaData prop = node.getClassMetaData().findPropertyByElementName(name);
+			if (prop == null)
+				throw new DataStreamException(node.getClassMetaData(), null, getNodeHistory() + ": Invalid element " + name + 
+						" in node " + node.getClassMetaData().getGraph().getName());
+
+			node = new NodeSelection(node, prop);
+			// is an one-to-one relationship between objects ?
+			if ((prop.getCompactibleTypeMetaData() != null) && (!prop.isCollection())) {
+				node = new NodeSelection(node, prop.getCompactibleTypeMetaData());
+				startClass(attributes);
+			}
+		}
+	}
 	
 	/**
-	 * @param name
-	 * @param attributes
+	 * Start reading a new class 
+	 * @param attributes is the list of attributes declared in the XML document node
 	 */
 	protected void startClass(Attributes attributes) {
 		ClassMetaData currentClass = node.getClassMetaData();
@@ -227,65 +294,116 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	 * @param name is the name of the XML element
 	 */
 	protected void saxEndElement(String name) {
-		// if it's the root node, do nothing
-		if (node == null)
+		switch (getNodeType()) {
+		case ROOT:
 			return;
 		
-/*		if ((currentClass == null) && (currentProperty == null))
-			return;
-*/
-
-		// is a property being ended
-		if (node.isPropertySelection()) {
-			// end property tag
-			node = node.getParent();
-		}
-		else {
-			// end class tag
-			node = node.getParent();
-
-			ObjectValues vals = objects.pop();
-			
-			checkRequiredProperties(vals);
-	
-			Object obj = vals.createObject(context);
-//			Object obj = createObject(vals);
-
-			// is parent node a property ?
-			if ((node != null) && (node.isPropertySelection())) {
-				// take the parent object values
-				ObjectValues parent = objects.pop();
-				PropertyMetaData prop = node.getPropertyMetaData();
-				// parent property is a collection ?
-				if (prop.isCollection()) {
-					// get the collection from values
-
-//					Collection lst = (Collection)parent.getValues().get(prop);
-					Collection lst = (Collection)parent.getValue(prop.getPath());
-					if (lst == null) {
-						lst = new HashSet();
-						parent.addValue(prop.getPath(), lst);
-//						parent.getValues().put(prop, lst);
-					}
-					lst.add(obj);
-				}
-				else {
-//					parent.getValues().put(prop, obj);
-					parent.addValue(prop.getPath(), obj);
-					// because it's a one to one entity relationship, it moves from the current class to the parent class
-					node = node.getParent();
-				}
-				objects.push(parent);
-			}
-			else {
-				// new object is created
-				if (consumer != null)
-					 consumer.onNewObject(obj);
-				else results.add(obj);
-			}
+		case PROPERTY:
+			endPropertyNode(name);
+			break;
+		
+		case CLASS:
+			endClassNode(name);
+			break;
+		
+		case CUSTOM_PROPERTIES:
+			endCustomPropertiesNode(name);
+			break;
 		}
 	}
 
+	
+	/**
+	 * Called when finishing reading a node that represents a property
+	 * @param nodeName is the XML node name
+	 */
+	protected void endPropertyNode(String nodeName) {
+		// end property tag
+		node = node.getParent();
+	}
+	
+	
+	/**
+	 * Called when finishing reading a node that represents a class
+	 * @param nodeName is the XML node name
+	 */
+	protected void endClassNode(String nodeName) {
+		// end class tag
+		node = node.getParent();
+
+		ObjectValues vals = objects.pop();
+		
+		checkRequiredProperties(vals);
+
+		Object obj = vals.createObject(context);
+		
+		if (vals.getCustomProperties() != null) {
+			notifyCustomPropWriters(obj, vals.getCustomProperties());
+		}
+
+		// is parent node a property ?
+		if ((node != null) && (node.isPropertySelection())) {
+			// take the parent object values
+			ObjectValues parent = objects.pop();
+			PropertyMetaData prop = node.getPropertyMetaData();
+			// parent property is a collection ?
+			if (prop.isCollection()) {
+				// get the collection from values
+
+				Collection lst = (Collection)parent.getValue(prop.getPath());
+				if (lst == null) {
+					lst = new HashSet();
+					parent.addValue(prop.getPath(), lst);
+				}
+				lst.add(obj);
+			}
+			else {
+				parent.addValue(prop.getPath(), obj);
+				// because it's a one to one entity relationship, it moves from the current class to the parent class
+				node = node.getParent();
+			}
+			objects.push(parent);
+		}
+		else {
+			// new object is created
+			if (consumer != null)
+				 consumer.onNewObject(obj);
+			else results.add(obj);
+		}
+	}
+
+	
+	/**
+	 * Notify all custom property writers about custom properties read for this object
+	 * @param obj the object that custom properties were read in the document
+	 * @param customProperties the custom properties read in the XML document
+	 */
+	protected void notifyCustomPropWriters(Object obj, Map<String, String> customProperties) {
+		if (propWriters == null) {
+			return;
+		}
+		
+		for (CustomPropertiesWriter writer: propWriters) {
+			writer.writeCustomProperties(obj, customProperties);
+		}
+	}
+
+	/**
+	 * Called when finishing reading a node that represents a custom property
+	 * @param nodeName is the XML node name
+	 */
+	protected void endCustomPropertiesNode(String nodeName) {
+		// the node is a property value ?
+		if (customPropName != null) {
+			customPropName = null;
+		}
+		else {
+			// finished reading all the custom property values.
+			ObjectValues objvals = objects.getLast();
+			objvals.setCustomProperties(customProperties);
+			customProperties = null;
+		}
+	}
 	
 	/**
 	 * Check if there is a missing property that is required
@@ -302,82 +420,82 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				}
 			}
 		}
-/*		for (PropertyMetaData prop: vals.getClassMetaData().getProperties()) {
-			// is property required ?
-			if (prop.getProperty() != null) {
-				if ((prop.getProperty().getUse() == PropertyUse.REQUIRED) && (vals.getValues().get(prop) == null)) {
-					String s = "Property '" + vals.getClassMetaData().getGraph().getName() + "."  + prop.getElementName() + "' is required";
-					throw new DataStreamException(getNodeHistory() + ": " +  s);
-				}
-			}
-		}
-*/	}
-
-	/**
-	 * Create an instance of the object using the current class meta data and the list
-	 * of property values
-	 * @param vals list of property values
-	 * @return instance of the object
-	 */
-/*	protected Object createObject(ObjectValues vals) {
-		// create an instance of the object
-		Object obj = context.createInstance(vals.getClassMetaData().getGraphClass(), getObjectAttributes(vals));
-
-		// set the values of the properties
-		List<PropertyValues> props = vals.groupProperties();
-		for (PropertyValues prop: props) {
-			prop.applyValues(context, obj);
-		}
-		return obj;
 	}
-*/	
-	
-	/**
-	 * Mount the list of properties for the creation of the object
-	 * @param vals
-	 * @return
-	 */
-/*	protected Map<String, Object> getObjectAttributes(ObjectValues vals) {
-		Map<String, Object> props = new HashMap<String, Object>();
-		for (PropertyMetaData prop: vals.getValues().keySet()) {
-			props.put(prop.getPath(), vals.getValues().get(prop));
-		}
-		return props;
-	}
-*/	
+
+
 	
 	/**
 	 * Called by SAX when reading the content of an XML element
 	 * @param value the content of the element
 	 */
 	protected void saxCharacters(String value) {
-		if ((node == null) || (value == null))
+		if (value == null)
 			return;
 
 		value = value.trim();
 		if (value.isEmpty())
 			return;
-		
-		// get the content of the current property being read
-		if (node.isPropertySelection()) {
-			PropertyMetaData prop = node.getPropertyMetaData();
-			Class type = prop.getConvertionType();
-			DataConverter conv = context.findConverter(type);
-			Object val = conv.convertFromString(value, type);
-			ObjectValues vals = objects.pop();
-			vals.addValue(prop.getPath(), val);
-//			vals.getValues().put(prop, val);
-			objects.push(vals);
-			return;
-		}
 
-		if (node.isClassSelection()) {
-			throw new DataStreamException(node.getClassMetaData(), 
-				null, getNodeHistory() +
-				": A class element cannot have a content: " + node.getClassMetaData().getGraph().getName());
+		switch (getNodeType()) {
+		case ROOT:
+			return;
+
+		case PROPERTY:
+			handleContentProperty(value);
+			break;
+			
+		case CLASS:
+			handleContentClass(value);
+			break;
+			
+		case CUSTOM_PROPERTIES:
+			handleContentCustomProperty(value);
 		}
 	}
 
+	
+	/**
+	 * handle the text content of the XML node when the current node is a property
+	 * @param value is the node text content
+	 */
+	protected void handleContentProperty(String value) {
+		PropertyMetaData prop = node.getPropertyMetaData();
+		Class type = prop.getConvertionType();
+		DataConverter conv = context.findConverter(type);
+		Object val = conv.convertFromString(value, type);
+		ObjectValues vals = objects.pop();
+		vals.addValue(prop.getPath(), val);
+		objects.push(vals);
+	}
+	
+	
+	/**
+	 * handle the text content of the XML node when the current node is a class
+	 * @param value is the node text content
+	 */
+	protected void handleContentClass(String value) {
+		throw new DataStreamException(node.getClassMetaData(), 
+				null, getNodeHistory() +
+				": A class element cannot have a content: " + node.getClassMetaData().getGraph().getName());
+	}
+	
+	
+	/**
+	 * handle the text content of the XML node when the current node is a custom property
+	 * @param value is the node text content
+	 */
+	protected void handleContentCustomProperty(String value) {
+		// if there is no custom property name, so the content belongs to the custom property node
+		if (customPropName == null) {
+			throw new DataStreamException(node.getClassMetaData(), 
+					null, 
+					getNodeHistory() + ":" + node.getClassMetaData().getGraph().getCustomPropertiesNode() + 
+					" Node cannot have a content, just other nodes");
+		}
+		
+		// set the content of the custom property
+		customProperties.put(customPropName, value);
+	}
 	
 	/**
 	 * Return a text containing the displayable history of the current node
@@ -404,4 +522,48 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		}
 		return s;
 	}
+
+
+	/** {@inheritDoc}
+	 */
+	@Override
+	public void addPropertyWriter(CustomPropertiesWriter writer) {
+		if (propWriters == null) {
+			propWriters = new ArrayList<CustomPropertiesWriter>();
+		}
+		propWriters.add(writer);
+	}
+
+
+	/** {@inheritDoc}
+	 */
+	@Override
+	public void removePropertyWriter(CustomPropertiesWriter writer) {
+		if (propWriters == null) {
+			return;
+		}
+		propWriters.remove(writer);
+	}
+
+	/**
+	 * Return the type of node being read
+	 * @return instance of the enumeration {@link NodeType}
+	 */
+	public NodeType getNodeType() {
+		if (node == null) {
+			return NodeType.ROOT;
+		}
+		
+		if (customProperties != null) {
+			return NodeType.CUSTOM_PROPERTIES;
+		}
+		
+		if (node.isClassSelection()) {
+			return NodeType.CLASS;
+		}
+		else {
+			return NodeType.PROPERTY;
+		}
+	}
+	
 }

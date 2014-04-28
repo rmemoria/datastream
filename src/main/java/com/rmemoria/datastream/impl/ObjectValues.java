@@ -11,6 +11,10 @@ import java.util.Map;
 import com.rmemoria.datastream.StreamContext;
 
 /**
+ * Store the values of the object while reading the XML document. Once all
+ * values of the object is read, the object is instantiated and all its values
+ * are written to the respective properties
+ * 
  * @author Ricardo Memoria
  *
  */
@@ -18,12 +22,15 @@ public class ObjectValues {
 
 	private ClassMetaData classMetaData;
 	private List<PropertyValue> properties = new ArrayList<PropertyValue>();
-//	private Map<PropertyMetaData, Object> values = new HashMap<PropertyMetaData, Object>();
+	private Map<String, String> customProperties;
 
+	/**
+	 * Default constructor
+	 * @param classMetaData
+	 */
 	public ObjectValues(ClassMetaData classMetaData) {
 		super();
 		this.classMetaData = classMetaData;
-//		this.values = new HashMap<PropertyMetaData, Object>();
 	}
 
 
@@ -138,34 +145,8 @@ public class ObjectValues {
 		
 		return obj;
 	}
+
 	
-	
-	/**
-	 * Group properties that contains common nested properties (representing a one-to-one object)
-	 * @return List of {@link PropertyValues}
-	 */
-/*	public List<PropertyValues> groupProperties() {
-		List<PropertyValues> props = new ArrayList<PropertyValues>();
-		for (PropertyMetaData prop: values.keySet()) {
-			boolean found = false;
-			Object value = values.get(prop);
-			for (PropertyValues pv: props) {
-				if (pv.isPropertyGroup(prop)) {
-					pv.addProperty(prop, value);
-					found = true;
-					break;
-				}
-			}
-			
-			if (!found) {
-				PropertyValues pv = new PropertyValues();
-				pv.addProperty(prop, value);
-				props.add(pv);
-			}
-		}
-		return props;
-	}
-*/	
 	/**
 	 * @return the classMetaData
 	 */
@@ -185,5 +166,21 @@ public class ObjectValues {
 	 */
 	public List<PropertyValue> getProperties() {
 		return properties;
+	}
+
+
+	/**
+	 * @return the customProperties
+	 */
+	public Map<String, String> getCustomProperties() {
+		return customProperties;
+	}
+
+
+	/**
+	 * @param customProperties the customProperties to set
+	 */
+	public void setCustomProperties(Map<String, String> customProperties) {
+		this.customProperties = customProperties;
 	}
 }

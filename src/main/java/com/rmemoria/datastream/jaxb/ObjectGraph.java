@@ -56,6 +56,9 @@ public class ObjectGraph {
     
     @XmlAttribute
     protected Boolean ignorePropsNotDeclared;
+    
+    @XmlAttribute
+    protected String customPropertiesNode;
 
     /**
      * Gets the value of the property property.
@@ -170,6 +173,20 @@ public class ObjectGraph {
 	 */
 	public void setIgnorePropsNotDeclared(Boolean ignorePropsNotDeclared) {
 		this.ignorePropsNotDeclared = ignorePropsNotDeclared;
+	}
+
+	/**
+	 * @return the customPropertiesNode
+	 */
+	public String getCustomPropertiesNode() {
+		return customPropertiesNode;
+	}
+
+	/**
+	 * @param customPropertiesNode the customPropertiesNode to set
+	 */
+	public void setCustomPropertiesNode(String customPropertiesNode) {
+		this.customPropertiesNode = customPropertiesNode;
 	}
 
 }

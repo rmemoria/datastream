@@ -37,4 +37,18 @@ public interface DataUnmarshaller {
 	 * root object deserialized
 	 */
 	void unmarshall(InputStream stream, ObjectConsumer consumer);
+	
+	/**
+	 * Add an implementation of the {@link CustomPropertiesWriter} to the object
+	 * in order to receive object custom properties that are read along the document
+	 * @param writer implementation of the {@link CustomPropertiesWriter}
+	 */
+	void addPropertyWriter(CustomPropertiesWriter writer);
+	
+	/**
+	 * Remove the instance of {@link CustomPropertiesWriter} previously added with
+	 * the method {@link DataUnmarshaller#addPropertyWriter(CustomPropertiesWriter)} 
+	 * @param writer implementation of the {@link CustomPropertiesWriter}
+	 */
+	void removePropertyWriter(CustomPropertiesWriter writer);
 }
