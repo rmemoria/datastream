@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.net.URL;
 import java.util.Map;
 
 import org.junit.Test;
@@ -20,12 +19,11 @@ import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.ObjectConsumer;
 import com.rmemoria.datastream.ObjectProvider;
 import com.rmemoria.datastream.StreamContext;
-import com.rmemoria.datastream.StreamContextFactory;
 import com.rmemoria.datastream.StreamFileTypeXML;
 import com.rmemoria.datastream.test.model.Address;
+import com.rmemoria.datastream.test.model.Address.AddressArea;
 import com.rmemoria.datastream.test.model.Customer;
 import com.rmemoria.datastream.test.model.Order;
-import com.rmemoria.datastream.test.model.Address.AddressArea;
 
 /**
  * @author Ricardo Memoria
@@ -138,8 +136,7 @@ public class EmbeddedTest {
 	 */
 	public StreamContext getContextSingleObject() {
 		if (context == null) {
-			URL schema = getClass().getClassLoader().getResource("com/rmemoria/datastream/test/order-schema2.xml");
-			context = StreamContextFactory.createContext(schema);
+			context = ContextUtil.createContext("src/test/resources/order-schema2.xml");
 		}
 		return context;
 	}

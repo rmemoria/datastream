@@ -3,15 +3,16 @@
  */
 package com.rmemoria.datastream.test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.URL;
 
 import org.junit.Test;
 
 import com.rmemoria.datastream.DataStreamException;
 import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.StreamContext;
-import com.rmemoria.datastream.StreamContextFactory;
 import com.rmemoria.datastream.StreamFileTypeXML;
 
 /**
@@ -33,13 +34,14 @@ public class RequiredTest {
 	
 	/**
 	 * Test the required field
+	 * @throws FileNotFoundException 
 	 */
 	@Test(expected=DataStreamException.class)
-	public void testRequired() {
+	public void testRequired() throws FileNotFoundException {
 		//
 		StreamContext context = getContext();
 
-		InputStream in = getClass().getClassLoader().getResourceAsStream("com/rmemoria/datastream/test/order-data.xml");
+		InputStream in = new FileInputStream(new File("src\\test\\resources\\order-data.xml"));
 		DataUnmarshaller um = context.createUnmarshaller(StreamFileTypeXML.class);
 		um.unmarshall(in);
 	}
@@ -49,8 +51,7 @@ public class RequiredTest {
 	 */
 	public StreamContext getContext() {
 		if (context == null) {
-			URL schema = getClass().getClassLoader().getResource("com/rmemoria/datastream/test/order-schema-required.xml");
-			context = StreamContextFactory.createContext(schema);
+			context = ContextUtil.createContext("src/test/resources/order-schema-required.xml");
 		}
 		return context;
 	}

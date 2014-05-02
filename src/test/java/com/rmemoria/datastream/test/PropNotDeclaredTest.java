@@ -4,20 +4,20 @@
 package com.rmemoria.datastream.test;
 
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 
 import org.junit.Test;
 
 import com.rmemoria.datastream.DataMarshaller;
 import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.StreamContext;
-import com.rmemoria.datastream.StreamContextFactory;
 import com.rmemoria.datastream.StreamFileTypeXML;
 import com.rmemoria.datastream.test.model.MyTestClass;
 
@@ -33,8 +33,7 @@ public class PropNotDeclaredTest {
 
 	@Test
 	public void testPropNotDeclared() throws IOException {
-		URL schema = getClass().getClassLoader().getResource("com/rmemoria/datastream/test/mytestclass-schema.xml");
-		StreamContext context = StreamContextFactory.createContext(schema);
+		StreamContext context = ContextUtil.createContext("src/test/resources/mytestclass-schema.xml");
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 
 		MyTestClass obj = new MyTestClass();

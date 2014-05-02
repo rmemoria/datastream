@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -22,7 +21,6 @@ import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.ObjectConsumer;
 import com.rmemoria.datastream.ObjectProvider;
 import com.rmemoria.datastream.StreamContext;
-import com.rmemoria.datastream.StreamContextFactory;
 import com.rmemoria.datastream.StreamFileTypeXML;
 import com.rmemoria.datastream.test.model.Customer;
 import com.rmemoria.datastream.test.model.Item;
@@ -357,8 +355,7 @@ public class XmlTest {
 	 */
 	public StreamContext getContextSingleObject() {
 		if (contextSingleObject == null) {
-			URL schema = getClass().getClassLoader().getResource("com/rmemoria/datastream/test/order-schema.xml");
-			contextSingleObject = StreamContextFactory.createContext(schema);
+			contextSingleObject = ContextUtil.createContext("src/test/resources/order-schema.xml");
 		}
 		return contextSingleObject;
 	}
@@ -368,8 +365,7 @@ public class XmlTest {
 	 */
 	public StreamContext getContextCollection() {
 		if (contextCollection == null) {
-			URL schema = getClass().getClassLoader().getResource("com/rmemoria/datastream/test/order-schema-list.xml");
-			contextCollection = StreamContextFactory.createContext(schema);
+			contextCollection = ContextUtil.createContext("src/test/resources/order-schema-list.xml");
 		}
 		return contextCollection;
 	}

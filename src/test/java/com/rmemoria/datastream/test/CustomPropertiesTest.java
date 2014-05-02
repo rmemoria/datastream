@@ -3,12 +3,12 @@
  */
 package com.rmemoria.datastream.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +26,6 @@ import com.rmemoria.datastream.CustomPropertiesWriter;
 import com.rmemoria.datastream.DataMarshaller;
 import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.StreamContext;
-import com.rmemoria.datastream.StreamContextFactory;
 import com.rmemoria.datastream.StreamFileTypeXML;
 import com.rmemoria.datastream.test.model.Order;
 
@@ -130,8 +129,7 @@ public class CustomPropertiesTest implements CustomPropertiesReader, CustomPrope
 	 */
 	protected StreamContext getContext() {
 		if (context == null) {
-			URL schema = getClass().getClassLoader().getResource("com/rmemoria/datastream/test/custom-property.xml");
-			context = StreamContextFactory.createContext(schema);
+			context = ContextUtil.createContext("src/test/resources/custom-property.xml");
 		}
 		return context;
 	}

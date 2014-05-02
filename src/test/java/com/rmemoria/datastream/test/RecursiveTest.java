@@ -3,12 +3,12 @@
  */
 package com.rmemoria.datastream.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +17,6 @@ import org.junit.Test;
 import com.rmemoria.datastream.DataMarshaller;
 import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.StreamContext;
-import com.rmemoria.datastream.StreamContextFactory;
 import com.rmemoria.datastream.StreamFileTypeXML;
 import com.rmemoria.datastream.test.model.LinkedItem;
 
@@ -32,8 +31,7 @@ public class RecursiveTest {
 
 	@Test
 	public void testRecursiveItems() throws IOException {
-		URL schema = getClass().getClassLoader().getResource("com/rmemoria/datastream/test/linkeditem-schema.xml");
-		StreamContext context = StreamContextFactory.createContext(schema);
+		StreamContext context = ContextUtil.createContext("src/test/resources/linkeditem-schema.xml");
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 		
 		List<LinkedItem> lst = createModel();

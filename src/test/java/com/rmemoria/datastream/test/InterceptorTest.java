@@ -3,12 +3,11 @@
  */
 package com.rmemoria.datastream.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.net.URL;
 import java.util.Date;
 import java.util.Map;
 
@@ -18,7 +17,6 @@ import com.rmemoria.datastream.DataInterceptor;
 import com.rmemoria.datastream.DataMarshaller;
 import com.rmemoria.datastream.DataUnmarshaller;
 import com.rmemoria.datastream.StreamContext;
-import com.rmemoria.datastream.StreamContextFactory;
 import com.rmemoria.datastream.StreamFileTypeXML;
 import com.rmemoria.datastream.test.model.Customer;
 import com.rmemoria.datastream.test.model.CustomerWrapper;
@@ -71,8 +69,7 @@ public class InterceptorTest implements DataInterceptor {
 	 */
 	public StreamContext getContextSingleObject() {
 		if (contextSingleObject == null) {
-			URL schema = getClass().getClassLoader().getResource("com/rmemoria/datastream/test/order-schema.xml");
-			contextSingleObject = StreamContextFactory.createContext(schema);
+			contextSingleObject = ContextUtil.createContext("src/test/resources/order-schema.xml");
 		}
 		return contextSingleObject;
 	}
