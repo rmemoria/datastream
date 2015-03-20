@@ -5,6 +5,7 @@ package com.rmemoria.datastream.test;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import com.rmemoria.datastream.StreamContext;
@@ -25,7 +26,7 @@ public class ContextUtil {
 			InputStream in = new FileInputStream(file);
 			return StreamContextFactory.createContext(in);
 		}
-		catch (Exception e) { 
+		catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
 		}
 	}

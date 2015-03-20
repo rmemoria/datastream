@@ -6,6 +6,7 @@ package com.rmemoria.datastream.impl;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import com.rmemoria.datastream.DataStreamException;
 import com.rmemoria.datastream.jaxb.ObjectCollection;
 import com.rmemoria.datastream.jaxb.ObjectGraph;
 import com.rmemoria.datastream.jaxb.Property;
@@ -40,8 +41,8 @@ public class ClassPropertyScanner {
 	
 	/**
 	 * Scan the class and return its properties
+	 * @param context
 	 * @param graph
-	 * @param clazz
 	 * @return
 	 */
 	public ClassMetaData scan(StreamContextImpl context, ObjectGraph graph) {
@@ -115,7 +116,11 @@ public class ClassPropertyScanner {
 		PropertyMetaData prop = cmd.findPropertyByName(props[0]);
 		if (prop == null) {
 			prop = new PropertyMetaData(cmd);
-			prop.setFieldAccess( createFieldAccess(cmd.getGraphClass(), props[0]) );
+            FieldAccess fa = createFieldAccess(cmd.getGraphClass(), props[0]);
+            if (fa == null) {
+                throw new DataStreamException("Property " + property.getName() + " not found");
+            }
+			prop.setFieldAccess( fa );
 			cmd.addProperty(prop);
 		}
 
@@ -140,7 +145,7 @@ public class ClassPropertyScanner {
 		// is the field type being "graphed" too?
 		if ((prop.getProperty() != null) && (prop.getProperty().getObjectGraph() != null)) {
 			if (prop.getProperty().isXmlAttribute())
-				throw new IllegalArgumentException("Property that contains a graph definition cannot be used as an XML attribute: " + prop);
+				throw new DataStreamException("Property that contains a graph definition cannot be used as an XML attribute: " + prop);
 
 			// composed property cannot have a class graph definition
 			if (prop.isComposed())
@@ -189,102 +194,13 @@ public class ClassPropertyScanner {
 			scanClass(classMetaData, clazz);
 	}
 
-	/**
-	 * Add a field of the class to the class meta data and collect more information
-	 * about the property. If the field is to be ignored, nothing is done
-	 * @param graph
-	 * @param clazz
-	 * @param field
-	 */
-/*	private void addField(ClassMetaData classMetaData, Class clazz, Field field) {
-		List<PropertyMetaData> lst = findPropertyByFieldName(classMetaData, field.getName());
-		
-		if (lst.size() > 0) {
-			for (PropertyMetaData prop: lst)
-				initializeProperty(prop, field);
-		}
-		else {
-			// all properties (not declared) must be included ?
-			if (!classMetaData.isNotDeclaredPropsIgnored()) {
-				// add the property
-				PropertyMetaData prop = new PropertyMetaData(classMetaData);
-				if (initializeProperty(prop, field))
-					classMetaData.addProperty(prop);
-			}
-		}
-	}
-*/	
-	
-	/**
-	 * Initialize the values of the properties according to its field and other
-	 * inner information (like composed fields, field access, etc);
-	 * @param prop
-	 * @param field
-	 * @return
-	 */
-/*	protected boolean initializeProperty(PropertyMetaData prop, Field field) {
-		FieldAccess fa = createFieldAccess(field);
-		if (fa == null) {
-			if (prop.getProperty() != null)
-				throw new RuntimeException("Property must have a get/set method to its value: " + prop);
-			else return false;
-		}
-
-		// check if property is composed of nested properties separated by dots
-		boolean isComposed = false;
-		if (prop.getProperty() != null) {
-			isComposed = prop.getProperty().getName().indexOf('.') > 0;
-		}
-		
-		// set the field access to its value
-		prop.setField(  createFieldAccessNotNull(prop, field) );
-
-		// is the field type being "graphed" too?
-		if ((prop.getProperty() != null) && (prop.getProperty().getObjectGraph() != null)) {
-			if (prop.getProperty().isXmlAttribute())
-				throw new IllegalArgumentException("Property that contains a graph definition cannot be used as an XML attribute: " + prop);
-
-			// composed property cannot have a class graph definition
-			if (isComposed)
-				throw new IllegalArgumentException("Composed property cannot point to a graph definition: " + prop);
-			ClassMetaData cmd = scan(context, prop.getProperty().getObjectGraph());
-			prop.setTypeMetaData(cmd);
-			cmd.setParentProperty(prop);
-		}
-
-		if (isComposed)
-			updateComposedFields(prop);
-
-		return true;
-	}
-*/
-	
-	/**
-	 * Search for a property by its field name. It returns a property even if it's a composed field
-	 * @param classMetaData
-	 * @param name
-	 * @return
-	 */
-/*	private List<PropertyMetaData> findPropertyByFieldName(ClassMetaData classMetaData, String name) {
-		List<PropertyMetaData> lst = new ArrayList<PropertyMetaData>();
-		for (PropertyMetaData prop: classMetaData.getProperties()) {
-			String s = prop.getProperty() != null ? prop.getProperty().getName(): null;
-			if (s != null) {
-				int index = s.indexOf('.');
-				if (index > 0)
-					s = s.substring(0, index);
-				
-				if (name.equals(s))
-					lst.add(prop);
-			}
-		}
-		return lst;
-	}
-*/
 
 	/**
-	 * Get the read and write methods of the field
-	 * @param field
+	 * Get the read and write methods of the field. The field must be declared in the given class,
+     * but read and write are searched across parent classes, if not found immediatelly in the class
+     *
+	 * @param clazz the class to get the methods for reading and writing a property
+     * @param fieldname the name of the field inside the class
 	 * @return
 	 */
 	protected FieldAccess createFieldAccess(Class clazz, String fieldname) {

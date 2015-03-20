@@ -1,2 +1,5 @@
 /target
 /.svn
+.idea
+.settings
+datastream.iml

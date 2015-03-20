@@ -41,7 +41,7 @@ public class RequiredTest {
 		//
 		StreamContext context = getContext();
 
-		InputStream in = new FileInputStream(new File("src\\test\\resources\\order-data.xml"));
+		InputStream in = new FileInputStream(new File("src/test/resources/order-data.xml"));
 		DataUnmarshaller um = context.createUnmarshaller(StreamFileTypeXML.class);
 		um.unmarshall(in);
 	}

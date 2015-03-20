@@ -12,6 +12,7 @@ import java.util.Map;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -60,18 +61,18 @@ public class StreamContextImpl implements StreamContext {
 	 */
 	@Override
 	public void setSchema(InputStream inputStream) {
-		try {
 			Unmarshaller unmarshaller = createSAXUnmarshaller();
-			graphSchema = (GraphSchema)unmarshaller.unmarshal(inputStream);
-			initializeGraphSchema();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+        try {
+            graphSchema = (GraphSchema)unmarshaller.unmarshal(inputStream);
+        } catch (JAXBException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        initializeGraphSchema();
 	}
 
 	
-	/**
-	 * @param xmlSchema
+	/** {@inheritDoc}
 	 */
 	private void initializeGraphSchema() {
 		if ((graphSchema.getObjectGraph() != null) && (graphSchema.getObjectCollection() != null))
