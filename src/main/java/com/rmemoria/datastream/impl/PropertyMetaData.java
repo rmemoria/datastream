@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.rmemoria.datastream.DataStreamException;
 import com.rmemoria.datastream.StreamContext;
 import com.rmemoria.datastream.jaxb.Property;
 import com.rmemoria.datastream.jaxb.PropertyUse;
@@ -25,7 +26,6 @@ public class PropertyMetaData {
 	private ClassMetaData classMetaData;
 	private Property property;
 	private FieldAccess fieldAccess;
-//	private FieldAccess[] subfields;
 	private ClassMetaData typeMetaData;
 	private ClassMetaData compactibleTypeMetaData;
 	private boolean compactibleTypeChecked = false;
@@ -107,7 +107,7 @@ public class PropertyMetaData {
 	
 	/**
 	 * Return the path of the property until the parent is reached
-	 * @param parent
+	 * @param parentProp the name of the inner parent property
 	 * @return
 	 */
 	public String getPath(PropertyMetaData parentProp) {
@@ -124,7 +124,11 @@ public class PropertyMetaData {
 	 * @return
 	 */
 	public String getPropertyName() {
-		return fieldAccess.getName();
+        if (fieldAccess != null) {
+            return fieldAccess.getName();
+        }
+
+		return property != null? property.getName(): null;
 	}
 
 	
@@ -368,7 +372,11 @@ public class PropertyMetaData {
 		// read from the first parent (the last in the list) to this property (the first included)
 		Object val = obj;
 		for (int i = props.size() - 1; i >= 0; i--) {
-			val = props.get(i).getFieldAccess().getValue(val);
+            FieldAccess fa = props.get(i).getFieldAccess();
+            if (fa == null) {
+                throw new DataStreamException("Not possible to access field " + getPropertyName());
+            }
+			val = fa.getValue(val);
 			if (val == null) {
 				return null;
 			}
@@ -420,7 +428,7 @@ public class PropertyMetaData {
 	}
 
 	/**
-	 * @param simpleField the simpleField to set
+	 * @param field the simpleField to set
 	 */
 	public void setFieldAccess(FieldAccess field) {
 		this.fieldAccess = field;
