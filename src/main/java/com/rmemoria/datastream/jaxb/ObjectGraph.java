@@ -60,6 +60,9 @@ public class ObjectGraph {
     @XmlAttribute
     protected String customPropertiesNode;
 
+    @XmlAttribute
+    protected boolean includeNullValues = true;
+
     /**
      * Gets the value of the property property.
      * 
@@ -189,4 +192,11 @@ public class ObjectGraph {
 		this.customPropertiesNode = customPropertiesNode;
 	}
 
+    public boolean isIncludeNullValues() {
+        return includeNullValues;
+    }
+
+    public void setIncludeNullValues(boolean includeNullValues) {
+        this.includeNullValues = includeNullValues;
+    }
 }

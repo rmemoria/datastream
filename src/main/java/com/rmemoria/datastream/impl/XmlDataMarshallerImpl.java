@@ -160,9 +160,9 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 
 	/**
 	 * Create an XML element from an object
-	 * @param cmd
 	 * @param obj
-	 * @param parentProperty
+     * @param cmd
+	 * @param includeClassElement
 	 * @return
 	 * @throws XMLStreamException 
 	 */
@@ -176,7 +176,9 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 		for (PropertyMetaData prop: props) {
 			if ((!prop.isSerializationIgnored()) && (prop.isXmlAttribute())) {
 				Object value = prop.getValue(obj);
-				if (value != null) {
+
+                // value is different of null or include even null values?
+				if ((value != null) || (prop.getClassMetaData().getGraph().isIncludeNullValues())) {
 					String text = convertToString(value);
 					if (text != null)
 						xml.writeAttribute(prop.getElementName(), text);
@@ -310,6 +312,9 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 	 * @return
 	 */
 	protected String convertToString(Object value) {
+        if (value == null) {
+            return "";
+        }
 		DataConverter conv = context.findConverter(value.getClass());
 		return conv.convertToString(value);
 	}

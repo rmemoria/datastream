@@ -459,10 +459,18 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	 * @param value is the node text content
 	 */
 	protected void handleContentProperty(String value) {
-		PropertyMetaData prop = node.getPropertyMetaData();
-		Class type = prop.getConvertionType();
-		DataConverter conv = context.findConverter(type);
-		Object val = conv.convertFromString(value, type);
+        Object val;
+        PropertyMetaData prop = node.getPropertyMetaData();
+
+        if (value == null || value.isEmpty()) {
+            val = null;
+        }
+        else {
+            Class type = prop.getConvertionType();
+            DataConverter conv = context.findConverter(type);
+            val = conv.convertFromString(value, type);
+        }
+
 		ObjectValues vals = objects.pop();
 		vals.addValue(prop.getPath(), val);
 		objects.push(vals);

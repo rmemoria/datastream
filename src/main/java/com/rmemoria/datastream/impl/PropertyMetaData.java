@@ -161,67 +161,7 @@ public class PropertyMetaData {
 		this.parent = parent;
 	}
 	
-	/**
-	 * Set the value of the property for the given object in the current context
-	 * @param context implementation of {@link StreamContext} 
-	 * @param obj the object to have its property set
-	 * @param value the value to set
-	 * @param forceObjectValue if true, and if value is not null, the getFieldAccessObject won't call the 
-	 * 		client to generate a new value, but use the value provided in the method argument
-	 */
-/*	public void setValue(StreamContext context, Object obj, Object value, boolean forceObjectValue) {
-		PropertyMetaData linkprop = getTypeMetaData() != null? getTypeMetaData().getLinkParentObject() : null;
 
-		// is a collection ?
-		if (isCollection()) {
-			Collection lst = getCollectionObject(context, obj);
-			for (Object item: (Collection)value) {
-				lst.add(item);
-				// is the property link between objects defined? 
-				if (linkprop != null) {
-					// link objects in the list with its parent by its link property 
-						linkprop.setValue(context, item, obj, true);
-				}
-			}
-			return;
-		}
-
-		if (subfields != null) {
-			// get the first reference of a composite property
-			String propname = getPropertyName(0);
-			Object target = getFieldAccessObject(context, field, obj, propname, value, forceObjectValue);
-
-			// navigate through the fields of the composite property
-			for (int i = 0; i < subfields.length - 1; i++) {
-				propname = getPropertyName(i + 1);
-				target = getFieldAccessObject(context, subfields[i], target, propname, value, false);
-			}
-
-			// set the value of the last field in the composite property
-			subfields[subfields.length - 1].setValue(target, value);
-		}
-		else {
-			field.setValue(obj, value);
-		}
-
-		// is the link property between objects available ?
-		if (linkprop != null) {
-			// set the link between the object and the value, if available
-			linkprop.setValue(context, value, obj, true);
-		}
-	}
-*/
-	
-/*	private String getPropertyName(int index) {
-		String s = "";
-		for (int i = index; i < subfields.length; i++) {
-			if (!s.isEmpty())
-				s += ".";
-			s += subfields[i].getField().getName();
-		}
-		return s;
-	}
-*/	
 	/**
 	 * Return the value for the given object and its {@link FieldAccess}. If the field value is
 	 * null, then a new instance is created with the given context
