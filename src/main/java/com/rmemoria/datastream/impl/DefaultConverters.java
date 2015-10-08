@@ -68,8 +68,9 @@ public class DefaultConverters implements DataConverter {
 	 */
 	@Override
 	public Object convertFromString(String s, Class classType) {
-		if (s == null)
-			return null;
+		if (s == null || s.isEmpty()) {
+            return null;
+        }
 
 		// check if it's a string
 		if (classType == String.class)
