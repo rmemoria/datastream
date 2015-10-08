@@ -278,15 +278,38 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				if (prop == null)
 					throw new DataStreamException(currentClass, null, getNodeHistory() +  ": Invalid element " + elemName + 
 							" in node " + currentClass.getGraph().getName());
-				Class type = prop.getConvertionType();
-				DataConverter conv = context.findConverter(type);
-				Object val = conv.convertFromString(propvalue, type);
+
+                Object val = convertValueFromString(prop, propvalue);
+//				Class type = prop.getConvertionType();
+//				DataConverter conv = context.findConverter(type);
+//				Object val = conv.convertFromString(propvalue, type);
 				
 				vals.addValue(prop.getPath(), val);
 //				vals.getValues().put(prop, val);
 			}
 		}
 	}
+
+
+    /**
+     * Convert a value from string to the original type according to the given property meta data
+     * @param prop
+     * @param value
+     * @return the original value
+     */
+    protected Object convertValueFromString(PropertyMetaData prop, String value) {
+        Object val;
+
+        // is value null ?
+        if (value != null && value.isEmpty()) {
+            return Constants.NULL_VALUE;
+        }
+        else {
+            Class type = prop.getConvertionType();
+            DataConverter conv = context.findConverter(type);
+            return conv.convertFromString(value, type);
+        }
+    }
 
 		
 	/**
@@ -459,17 +482,17 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	 * @param value is the node text content
 	 */
 	protected void handleContentProperty(String value) {
-        Object val;
         PropertyMetaData prop = node.getPropertyMetaData();
 
-        if (value == null || value.isEmpty()) {
-            val = null;
-        }
-        else {
-            Class type = prop.getConvertionType();
-            DataConverter conv = context.findConverter(type);
-            val = conv.convertFromString(value, type);
-        }
+        Object val = convertValueFromString(prop, value);
+//        if (value == null || value.isEmpty()) {
+//            val = null;
+//        }
+//        else {
+//            Class type = prop.getConvertionType();
+//            DataConverter conv = context.findConverter(type);
+//            val = conv.convertFromString(value, type);
+//        }
 
 		ObjectValues vals = objects.pop();
 		vals.addValue(prop.getPath(), val);

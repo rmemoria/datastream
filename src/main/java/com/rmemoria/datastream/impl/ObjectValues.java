@@ -134,13 +134,17 @@ public class ObjectValues {
 	public Object createObject(StreamContext context) {
 		Map<String, Object> attrs = new HashMap<String, Object>();
 		for (PropertyValue val: properties) {
-			val.addAttributes(attrs, null);
+            if (val.getValue() != Constants.NULL_VALUE) {
+                val.addAttributes(attrs, null);
+            }
 		}
 		Object obj = context.createInstance(getClassMetaData().getGraphClass(), attrs);
 		
 		// set the values in the new object
 		for (PropertyValue val: properties) {
-			val.writePropertyValue(context, obj);
+            if (val.getValue() != Constants.NULL_VALUE) {
+                val.writePropertyValue(context, obj);
+            }
 		}
 		
 		return obj;
