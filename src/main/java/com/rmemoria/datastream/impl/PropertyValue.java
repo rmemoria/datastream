@@ -86,9 +86,9 @@ public class PropertyValue {
 		}
 
 		// update the child values
-		if (properties != null) {
+		if (properties != null && value != null) {
 			for (PropertyValue pv: properties) {
-				pv.writePropertyValue(context, value);
+                pv.writePropertyValue(context, value);
 			}
 		}
 	}
@@ -108,7 +108,7 @@ public class PropertyValue {
 	 * @param limitParent is the parent that will limit the path resolution
 	 */
 	public void addAttributes(Map<String, Object> attrs, PropertyMetaData limitParent) {
-		if (value != null) {
+		if (value != null && value != Constants.NULL_VALUE) {
 			attrs.put(property.getPath(limitParent), value);
 		}
 

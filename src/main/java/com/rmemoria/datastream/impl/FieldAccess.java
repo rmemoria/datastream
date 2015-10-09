@@ -43,7 +43,8 @@ public class FieldAccess {
 	public void setValue(Object obj, Object value) {
 		try {
             if (value == Constants.NULL_VALUE) {
-                setMethod.invoke(obj, null);
+                Object arg = null;
+                setMethod.invoke(obj, arg);
             }
             else {
                 setMethod.invoke(obj, value);

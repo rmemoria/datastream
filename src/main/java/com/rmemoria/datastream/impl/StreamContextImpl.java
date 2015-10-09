@@ -242,7 +242,7 @@ public class StreamContextImpl implements StreamContext {
 				break;
 		}
 		
-		if (val == null) {
+		if (val == null && params.size() > 0) {
 			try {
 				val = clazz.newInstance();
 			} catch (Exception e) {
