@@ -358,14 +358,22 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 		node = node.getParent();
 
 		ObjectValues vals = objects.pop();
-		
-		checkRequiredProperties(vals);
 
-		Object obj = vals.createObject(context);
+        Object obj;
+        // if there is no property, so the object is null
+        if (vals.getProperties().size() != 0) {
+            checkRequiredProperties(vals);
+
+            obj = vals.createObject(context);
+
+            if (vals.getCustomProperties() != null) {
+                notifyCustomPropWriters(obj, vals.getCustomProperties());
+            }
+        }
+        else {
+            obj = null;
+        }
 		
-		if (vals.getCustomProperties() != null) {
-			notifyCustomPropWriters(obj, vals.getCustomProperties());
-		}
 
 		// is parent node a property ?
 		if ((node != null) && (node.isPropertySelection())) {
@@ -381,7 +389,10 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 					lst = new HashSet();
 					parent.addValue(prop.getPath(), lst);
 				}
-				lst.add(obj);
+
+                if (obj != null) {
+                    lst.add(obj);
+                }
 			}
 			else {
 				parent.addValue(prop.getPath(), obj);
