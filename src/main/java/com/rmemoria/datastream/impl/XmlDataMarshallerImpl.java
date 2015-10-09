@@ -190,29 +190,32 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 		for (PropertyMetaData prop: props) {
 			if ((!prop.isSerializationIgnored()) && (!prop.isXmlAttribute())) {
 				Object value = prop.getValue(obj);
-				if (value != null) {
+				if (value != null || prop.getClassMetaData().getGraph().isIncludeNullValues()) {
 					// serialize it as an XML element
 					xml.writeStartElement(prop.getElementName());
-					if (prop.getCompactibleTypeMetaData() != null) {
-						// serialize the object that this property points to
-						// the property is of collection type ?
-						if (prop.isCollection()) {
-							// serialize all items of the collection
-							Collection lst = (Collection)value;
-							for (Object item: lst) {
-								createXml(item, prop.getCompactibleTypeMetaData(), true);
-							}
-						}
-						else {
-							// serialize the object pointed by the collection
-							createXml(value, prop.getCompactibleTypeMetaData(), false);
-						}
-					}
-					else {
-						String text = convertToString(value);
-						if (text != null)
-							xml.writeCharacters(text);
-					}
+                    // just write content if there is any value, otherwise just close the tag indicating an empty value
+                    if (value != null) {
+                        if (prop.getCompactibleTypeMetaData() != null) {
+                            // serialize the object that this property points to
+                            // the property is of collection type ?
+                            if (prop.isCollection()) {
+                                // serialize all items of the collection
+                                Collection lst = (Collection)value;
+                                for (Object item: lst) {
+                                    createXml(item, prop.getCompactibleTypeMetaData(), true);
+                                }
+                            }
+                            else {
+                                // serialize the object pointed by the collection
+                                createXml(value, prop.getCompactibleTypeMetaData(), false);
+                            }
+                        }
+                        else {
+                            String text = convertToString(value);
+                            if (text != null)
+                                xml.writeCharacters(text);
+                        }
+                    }
 					xml.writeEndElement();
 				}
 			}

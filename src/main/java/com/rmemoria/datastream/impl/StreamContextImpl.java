@@ -92,7 +92,7 @@ public class StreamContextImpl implements StreamContext {
 	protected Unmarshaller createSAXUnmarshaller()  {
 		try {
 			SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-			URL url = getClass().getClassLoader().getResource("datastream-1.0.xsd");
+			URL url = getClass().getClassLoader().getResource("datastream-1.1.xsd");
 //			URL url = getClass().getClassLoader().getResource("com/rmemoria/datastream/datastream-1.0.xsd");
 			Schema xmlSchema = sf.newSchema(url);
 

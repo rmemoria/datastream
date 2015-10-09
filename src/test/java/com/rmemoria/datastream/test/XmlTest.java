@@ -62,7 +62,7 @@ public class XmlTest {
 		List<Order> lst = createCollectionModel();
 
 		// serialize list
-		File file = new File("target\\test-list.xml");
+		File file = new File("target/test-list.xml");
 		FileOutputStream f = new FileOutputStream(file);
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 		m.marshall(lst, f);
@@ -94,7 +94,7 @@ public class XmlTest {
 		Order order = createModel(1, "The customer");
 
 		// serialize to XML in an external file
-		File file = new File("target\\test.xml");
+		File file = new File("target/test.xml");
 		FileOutputStream f = new FileOutputStream(file);
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 		m.marshall(order, f);
@@ -124,7 +124,7 @@ public class XmlTest {
 		order.setCustomer(null);
 
 		// serialize to XML in an external file
-		File file = new File("target\\test-null.xml");
+		File file = new File("target/test-null.xml");
 		FileOutputStream f = new FileOutputStream(file);
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 		m.marshall(order, f);
@@ -152,7 +152,7 @@ public class XmlTest {
 		order2 = null;
 
 		// serialize to XML in an external file
-		File file = new File("target\\test-provider.xml");
+		File file = new File("target/test-provider.xml");
 		FileOutputStream f = new FileOutputStream(file);
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 		// generate it using a provider
@@ -196,7 +196,7 @@ public class XmlTest {
 		final List<Order> orders2 = new ArrayList<Order>();
 
 		// serialize to XML in an external file
-		File file = new File("target\\test-provider-list.xml");
+		File file = new File("target/test-provider-list.xml");
 		FileOutputStream f = new FileOutputStream(file);
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 		// generate it using a provider
@@ -255,7 +255,7 @@ public class XmlTest {
 		lst.add(order.getCustomer());
 
 		// serialize list
-		File file = new File("target\\test-mixed-list.xml");
+		File file = new File("target/test-mixed-list.xml");
 		FileOutputStream f = new FileOutputStream(file);
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 		m.marshall(lst, f);

@@ -53,7 +53,7 @@ public class InterceptorTest implements DataInterceptor {
 		Order order = createModel(1, "The customer");
 
 		// serialize to XML in an external file
-		File file = new File("target\\test-interceptor.xml");
+		File file = new File("target/test-interceptor.xml");
 		FileOutputStream f = new FileOutputStream(file);
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 		m.marshall(order, f);

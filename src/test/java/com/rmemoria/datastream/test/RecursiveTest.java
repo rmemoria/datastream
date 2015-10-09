@@ -36,12 +36,12 @@ public class RecursiveTest {
 		
 		List<LinkedItem> lst = createModel();
 
-		FileOutputStream out = new FileOutputStream("target\\linkedlist.xml");
+		FileOutputStream out = new FileOutputStream("target/linkedlist.xml");
 		m.marshall(lst, out);
 		out.close();
 		
 		
-		FileInputStream in = new FileInputStream("target\\linkedlist.xml");
+		FileInputStream in = new FileInputStream("target/linkedlist.xml");
 		DataUnmarshaller um = context.createUnmarshaller(StreamFileTypeXML.class);
 		List<LinkedItem> lst2 = (List<LinkedItem>)um.unmarshall(in);
 		in.close();

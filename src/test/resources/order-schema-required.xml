@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<graphSchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../../main/java/com/rmemoria/datastream/datastream-1.0.xsd">
+<graphSchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="datastream-1.1.xsd">
 
     <objectGraph name="order" class="com.rmemoria.datastream.test.model.Order">
         <property name="id" xmlAttribute="true" use="REQUIRED"/>

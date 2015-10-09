@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphSchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="datastream-1.1.xsd">
+
+    <objectGraph name="person" class="com.rmemoria.datastream.test.model.Person"
+        includeNullValues="false" >
+        <property name="address">
+            <objectGraph name="address" class="com.rmemoria.datastream.test.model.Address">
+                <property name="street" />
+                <property name="zip" />
+                <property name="area" />
+                <property name="number" />
+            </objectGraph>
+        </property>
+    </objectGraph>
+
+</graphSchema>

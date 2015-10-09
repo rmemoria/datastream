@@ -43,7 +43,7 @@ public class PropNotDeclaredTest {
 		obj.setVal3(3);
 		obj.setValLong4(4L);
 		
-		File file = new File("target\\prop-ignored.xml");
+		File file = new File("target/prop-ignored.xml");
 		FileOutputStream out = new FileOutputStream(file);
 		m.marshall(obj, out);
 		out.close();

@@ -38,7 +38,7 @@ import com.rmemoria.datastream.test.model.Order;
  */
 public class CustomPropertiesTest implements CustomPropertiesReader, CustomPropertiesWriter {
 
-	private static final String xmlfilename = "target\\test-custom-properties.xml";
+	private static final String xmlfilename = "target/test-custom-properties.xml";
 	
 	private StreamContext context;
 	

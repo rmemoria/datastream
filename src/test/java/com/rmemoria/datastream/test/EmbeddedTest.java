@@ -63,7 +63,7 @@ public class EmbeddedTest {
 		getContextSingleObject();
 
 		// serialize order
-		File file = new File("target\\test-mixed-list.xml");
+		File file = new File("target/test-mixed-list.xml");
 		FileOutputStream f = new FileOutputStream(file);
 		DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
 		m.marshall(f, new ObjectProvider() {
