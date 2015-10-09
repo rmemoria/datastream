@@ -5,6 +5,7 @@ package com.rmemoria.datastream.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +21,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -138,7 +140,8 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 				}
 			};
 
-			parser.parse(xmlstream,  handler);
+            InputSource is = new InputSource(new InputStreamReader(xmlstream, "UTF-8"));
+			parser.parse(is,  handler);
 
 		} catch (SAXException e) {
 			throw new RuntimeException(e);
