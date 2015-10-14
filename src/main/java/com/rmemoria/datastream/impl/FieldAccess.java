@@ -3,6 +3,9 @@
  */
 package com.rmemoria.datastream.impl;
 
+import com.rmemoria.datastream.DataStreamException;
+
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -41,10 +44,16 @@ public class FieldAccess {
 	 * @param value
 	 */
 	public void setValue(Object obj, Object value) {
+        if (obj == null) {
+            throw new DataStreamException("Invalid null object to set value of " + getName() + ": " + getFieldType());
+        }
+        if (setMethod == null) {
+            throw new RuntimeException("No set method found for property " + getName() + ": " + getFieldType());
+        }
+
 		try {
-            if (value == Constants.NULL_VALUE) {
-                Object arg = null;
-                setMethod.invoke(obj, arg);
+            if (value == Constants.NULL_VALUE || value == null) {
+                setNullValue(obj);
             }
             else {
                 setMethod.invoke(obj, value);
@@ -53,6 +62,24 @@ public class FieldAccess {
 			throw new RuntimeException(e);
 		}
 	}
+
+    private void setNullValue(Object obj) throws InvocationTargetException, IllegalAccessException {
+        Class ftype = getFieldType();
+        Object arg = null;
+
+        if (ftype.isPrimitive()) {
+            if (Number.class.isAssignableFrom(ftype)) {
+                arg = 0;
+            }
+            else {
+                if (Boolean.class.isAssignableFrom(ftype)) {
+                    arg = false;
+                }
+            }
+        }
+
+        setMethod.invoke(obj, arg);
+    }
 
 	
 	/**

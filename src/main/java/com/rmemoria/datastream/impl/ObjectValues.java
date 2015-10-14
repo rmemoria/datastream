@@ -139,14 +139,16 @@ public class ObjectValues {
             }
 		}
 		Object obj = context.createInstance(getClassMetaData().getGraphClass(), attrs);
-		
-		// set the values in the new object
-		for (PropertyValue val: properties) {
-            if (val.getValue() != Constants.NULL_VALUE) {
-                val.writePropertyValue(context, obj);
+
+        if (obj != null) {
+            // set the values in the new object
+            for (PropertyValue val: properties) {
+                if (val.getValue() != Constants.NULL_VALUE) {
+                    val.writePropertyValue(context, obj);
+                }
             }
-		}
-		
+        }
+
 		return obj;
 	}
 

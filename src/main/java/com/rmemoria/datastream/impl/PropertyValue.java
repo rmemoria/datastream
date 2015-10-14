@@ -66,15 +66,17 @@ public class PropertyValue {
 	
 			if (property.isCollection()) {
 
-				Collection lst = property.getCollectionObject(context, owner);
-				for (Object item: (Collection)value) {
-					lst.add(item);
-					// is the property link between objects defined? 
-					if (linkprop != null) {
-						// link objects in the list with its parent by its link property 
-						linkprop.getFieldAccess().setValue(item, owner);
-					}
-				}
+                if (value != null) {
+                    Collection lst = property.getCollectionObject(context, owner);
+                    for (Object item: (Collection)value) {
+                        lst.add(item);
+                        // is the property link between objects defined?
+                        if (linkprop != null) {
+                            // link objects in the list with its parent by its link property
+                            linkprop.getFieldAccess().setValue(item, owner);
+                        }
+                    }
+                }
 			}
 			else { 
 				getProperty().getFieldAccess().setValue(owner, value);
