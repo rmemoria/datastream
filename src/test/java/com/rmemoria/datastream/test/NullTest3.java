@@ -1,9 +1,6 @@
 package com.rmemoria.datastream.test;
 
-import com.rmemoria.datastream.DataMarshaller;
-import com.rmemoria.datastream.DataUnmarshaller;
-import com.rmemoria.datastream.StreamContext;
-import com.rmemoria.datastream.StreamFileTypeXML;
+import com.rmemoria.datastream.*;
 import com.rmemoria.datastream.test.model.Address;
 import com.rmemoria.datastream.test.model.Person;
 import org.junit.Test;
@@ -11,6 +8,8 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.Date;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -49,6 +48,19 @@ public class NullTest3 {
         // read content
         FileInputStream fin = new FileInputStream(file);
         DataUnmarshaller um = context.createUnmarshaller(StreamFileTypeXML.class);
+        context.addInterceptor(new DataInterceptor() {
+            @Override
+            public Object newObject(Class objectType, Map<String, Object> params) {
+                Person p = new Person();
+                p.setBirthDate(new Date());
+                return p;
+            }
+
+            @Override
+            public Class getObjectClass(Object obj) {
+                return obj.getClass();
+            }
+        });
         Object obj = um.unmarshall(fin);
         assertEquals(obj.getClass(), Person.class);
 

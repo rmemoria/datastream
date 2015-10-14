@@ -66,6 +66,8 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	private Map<String, String> customProperties;
 	private String customPropName;
 
+    private boolean saxCharacterCalled;
+
 	
 	/**
 	 * Default constructor, receiving the context as parameter
@@ -160,6 +162,7 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	protected void saxStartElement(String name, Attributes attributes) {
 		// is the first node?
 		NodeType nodeType = getNodeType();
+        saxCharacterCalled = false;
 
 		switch (nodeType) {
 		case ROOT:
@@ -344,6 +347,9 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	 * @param nodeName is the XML node name
 	 */
 	protected void endPropertyNode(String nodeName) {
+        if (!saxCharacterCalled) {
+            handleContentProperty(null);
+        }
 		// end property tag
 		node = node.getParent();
 	}
@@ -466,7 +472,9 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 	 * @param value the content of the element
 	 */
 	protected void saxCharacters(String value) {
-		if (value == null)
+        saxCharacterCalled = true;
+
+        if (value == null)
 			return;
 
 		value = value.trim();

@@ -2,7 +2,9 @@
 <graphSchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
        xsi:noNamespaceSchemaLocation="datastream-1.1.xsd">
 
-    <objectGraph name="order" class="com.rmemoria.datastream.test.model.Order" ignorePropsNotDeclared="true">
+    <objectGraph name="order" class="com.rmemoria.datastream.test.model.Order"
+                 ignorePropsNotDeclared="true"
+                 includeNullValues="false">
         <property name="id" xmlAttribute="true" />
         <property name="customer.id" elementName="customerId" xmlAttribute="true" />
         <property name="customer.email" elementName="email" xmlAttribute="true" />

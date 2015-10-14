@@ -60,7 +60,7 @@ public class PropertyValue {
 			value = createValue(context);
 		}
 
-		if (value != null) {
+//		if (value != null) {
 			// get the linked property
 			PropertyMetaData linkprop = property.getTypeMetaData() != null? property.getTypeMetaData().getLinkParentObject() : null;
 	
@@ -83,7 +83,7 @@ public class PropertyValue {
 					linkprop.getFieldAccess().setValue(value, owner);
 				}
 			}
-		}
+//		}
 
 		// update the child values
 		if (properties != null && value != null) {
