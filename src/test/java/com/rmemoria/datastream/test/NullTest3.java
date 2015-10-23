@@ -53,6 +53,7 @@ public class NullTest3 {
             public Object newObject(Class objectType, Map<String, Object> params) {
                 Person p = new Person();
                 p.setBirthDate(new Date());
+                assertEquals(1, params.size());
                 return p;
             }
 
