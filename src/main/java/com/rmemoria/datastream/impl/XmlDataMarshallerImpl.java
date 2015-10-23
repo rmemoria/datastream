@@ -178,7 +178,7 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 				Object value = prop.getValue(obj);
 
                 // value is different of null or include even null values?
-				if ((value != null) || (prop.getClassMetaData().getGraph().isIncludeNullValues())) {
+				if ((value != null) || (prop.isIncludeNullValues())) {
 					String text = convertToString(value);
 					if (text != null)
 						xml.writeAttribute(prop.getElementName(), text);
@@ -190,7 +190,7 @@ public class XmlDataMarshallerImpl implements DataMarshaller {
 		for (PropertyMetaData prop: props) {
 			if ((!prop.isSerializationIgnored()) && (!prop.isXmlAttribute())) {
 				Object value = prop.getValue(obj);
-				if (value != null || prop.getClassMetaData().getGraph().isIncludeNullValues()) {
+				if (value != null || prop.isIncludeNullValues()) {
 					// serialize it as an XML element
 					xml.writeStartElement(prop.getElementName());
                     // just write content if there is any value, otherwise just close the tag indicating an empty value

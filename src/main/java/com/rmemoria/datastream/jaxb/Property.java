@@ -53,6 +53,9 @@ public class Property {
     @XmlAttribute
     protected Boolean xmlAttribute = false;
 
+    @XmlAttribute
+    protected Boolean includeNullValues;
+
     /**
      * Gets the value of the objectGraph property.
      * 
@@ -181,4 +184,11 @@ public class Property {
         this.xmlAttribute = value;
     }
 
+    public Boolean getIncludeNullValues() {
+        return includeNullValues;
+    }
+
+    public void setIncludeNullValues(Boolean includeNullValues) {
+        this.includeNullValues = includeNullValues;
+    }
 }

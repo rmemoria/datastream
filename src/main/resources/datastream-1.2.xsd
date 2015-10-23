@@ -12,6 +12,7 @@
         <xs:attribute name="elementName" type="xs:string"/>
         <xs:attribute name="xmlAttribute" type="xs:boolean"/>
         <xs:attribute name="customType" type="customType" />
+        <xs:attribute name="includeNullValues" type="xs:boolean" use="optional" />
     </xs:complexType>
 
     <xs:complexType name="objectGraph">

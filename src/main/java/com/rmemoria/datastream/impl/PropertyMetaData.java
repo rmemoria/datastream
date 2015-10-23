@@ -274,7 +274,18 @@ public class PropertyMetaData {
 		}
 */		return (Collection)value;
 	}
-	
+
+
+    /**
+     * Check if property must include values in the XML even if its value is null
+     * @return true if value must be included
+     */
+    public boolean isIncludeNullValues() {
+        return property != null && property.getIncludeNullValues() != null?
+                property.getIncludeNullValues() :
+                getClassMetaData().getGraph().isIncludeNullValues();
+    }
+
 	/**
 	 * Check if the property should be ignored
 	 * @return true if should be ignored
