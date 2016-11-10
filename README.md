@@ -221,6 +221,65 @@ fin.close();
 
 ## 3. Advanced features
 
+
+### Dealing with huge datasets
+
+All data serialized and deserialized are read and written on demand using Java InputStream and OutputStream using JAXB libraty. This is a good approach because guarantees that a minimum memory is used, even when dealing with huge datasets.
+
+On the other hand, it is not a good approach to provide or consume the data using Collections, because by the end of the day, the whole data will have to fit into memory.
+
+To avoid this issue, you can use two interfaces to provide and consume objects as they are read or written from/to XML:
+
+```java
+public interface ObjectProvider {
+	Object getObjectToSerialize(int index);
+}
+
+public interface ObjectConsumer {
+	void onNewObject(Object object);	
+	void startObjectReading(Class objectClass);
+}
+```
+
+`ObjectProvider` - Use this interface when you want to provide objects to be serialized. This method will be used as many times as the return value is not null. When you want to stop providing objects to be serialized, simply return null.
+
+You provide an instance of this interface as an argument to `DataMarshaller#marshall`.
+
+In the example bellow, the method `getOrderByIndex` will return the object to be serialized using its index position provided by DataStream:
+
+```java
+	DataMarshaller m = context.createMarshaller(StreamFileTypeXML.class);
+    m.marshall(f, new ObjectProvider() {
+        @Override
+        public Object getObjectToSerialize(int index) {
+            return getOrderByIndex(index);
+        }
+    });
+
+```
+
+`ObjectConsumer` - Use this when you want to consume the objects read from XML stream as they are read by DataStream.
+
+You provide an instance of this interface as an argument to `DataStream#unmarshall`.
+
+In the example below, the method `onNewObject` will be called for each object read from the XML.
+
+```java
+DataUnmarshaller um = context.createUnmarshaller(StreamFileTypeXML.class);
+um.unmarshall(fin, new ObjectConsumer() {
+    @Override
+    public void onNewObject(Object object) {
+    	// called when object is read from XML stream
+        order2 = (Order)object;
+    }
+
+    @Override
+    public void startObjectReading(Class objectClass) {
+        // called if you want to take any action before reading the object
+    }
+});
+``
+
 ### Nested object properties
 
 You may map nested object properties as single nodes (or attributes) in XML. For example, consider the mapping:
@@ -297,3 +356,22 @@ public interface CustomPropertiesWriter {
 
 `CustomPropertyWriter` is called when reading an XML data. Any node that doesn't match a object property will be considered a custom property and will be passed as argument in a Map structure.
 
+### Type converter
+
+Allows you to create a custom type converter for a property type. You must specific an instance of the interface below:
+
+```java
+public interface DataConverter {
+
+	String convertToString(Object obj);
+	
+	Object convertFromString(String data, Class classType);
+}
+```
+
+And register it using the method `StreamContext#setConverter(Class type, DataConverter converter)` passing the class you want to provide specific converter and the instance of the `DataConverter`.
+`
+
+## License
+
+The content of this project itself is licensed under the Creative Commons Attribution 3.0 license, and the underlying source code used to format and display that content is licensed under the MIT license.
