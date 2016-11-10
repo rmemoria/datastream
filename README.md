@@ -169,19 +169,6 @@ Let's consider the same object model used previously, but let's change the XML m
 				</objectGraph>
 			</property>
 		</objectGraph>
-		
-		<objectGraph name="customer" class="com.rmemoria.datastream.test.model.Customer">
-		    <property name="id" xmlAttribute="true" />
-		    <property name="orders">
-		        <objectGraph name="order" class="com.rmemoria.datastream.test.model.Order" parentProperty="customer">
-					<property name="items">
-						<objectGraph name="item" class="com.rmemoria.datastream.test.model.Item" parentProperty="order">
-							<property name="product.id" elementName="product" xmlAttribute="true" />
-						</objectGraph>
-					</property>
-		        </objectGraph>
-		    </property>
-		</objectGraph>
 
 	</objectCollection>
 </graphSchema>
