@@ -166,18 +166,18 @@ public class XmlTest {
 
 		// read the XML and transform back to an object
 		FileInputStream fin = new FileInputStream(file);
-		DataUnmarshaller um = context.createUnmarshaller(StreamFileTypeXML.class);
-		um.unmarshall(fin, new ObjectConsumer() {
-			@Override
-			public void onNewObject(Object object) {
-				order2 = (Order)object;
-			}
+        DataUnmarshaller um = context.createUnmarshaller(StreamFileTypeXML.class);
+        um.unmarshall(fin, new ObjectConsumer() {
+            @Override
+            public void onNewObject(Object object) {
+                order2 = (Order)object;
+            }
 
-			@Override
-			public void startObjectReading(Class objectClass) {
-				// do nothing
-			}
-		});
+            @Override
+            public void startObjectReading(Class objectClass) {
+                // do nothing
+            }
+        });
 		fin.close();
 
 		compareOrders(order, order2);

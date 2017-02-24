@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphSchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="datastream-1.2.xsd">
+
+    <objectGraph name="customer" class="com.rmemoria.datastream.test.model.Customer"
+        includeNullValues="false" >
+        <property name="orders" use="IGNORE" />
+    </objectGraph>
+
+</graphSchema>

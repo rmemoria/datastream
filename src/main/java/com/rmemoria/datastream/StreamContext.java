@@ -28,7 +28,7 @@ public interface StreamContext {
 	
 	/**
 	 * Create an instance of the {@link DataMarshaller} object that will serialize the object to the destination format
-	 * @param targetFile indicate the target file to marshal the objects to
+	 * @param targetType indicate the target file to marshal the objects to
 	 * @return instance of {@link DataMarshaller} interface
 	 */
 	DataMarshaller createMarshaller(Class<? extends StreamFileType> targetType);

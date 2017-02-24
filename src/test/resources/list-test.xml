@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphSchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="datastream-1.2.xsd">
+
+    <objectGraph name="order" class="com.rmemoria.datastream.test.model.Order">
+        <property name="id" xmlAttribute="true" use="REQUIRED"/>
+        <property name="customer">
+            <objectGraph name="customer" class="com.rmemoria.datastream.test.model.Customer">
+                <property name="id" xmlAttribute="true" use="REQUIRED"/>
+				<property name="orders" use="IGNORE" />
+            </objectGraph>
+        </property>
+        <property name="items" >
+            <objectGraph name="item" class="com.rmemoria.datastream.test.model.Item" parentProperty="order">
+                <property name="product.id" elementName="product" xmlAttribute="true" />
+                <property name="quantity" elementName="quantity" xmlAttribute="true" />
+                <property name="unitPrice" elementName="unitPrice" xmlAttribute="true" />
+            </objectGraph>
+        </property>
+    </objectGraph>
+
+</graphSchema>

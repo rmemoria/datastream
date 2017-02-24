@@ -10,5 +10,6 @@ package com.rmemoria.datastream.test.model;
 public enum OrderStatus {
 
 	NEW,
-	CLOSED;
+	CLOSED,
+    ON_GOING;
 }

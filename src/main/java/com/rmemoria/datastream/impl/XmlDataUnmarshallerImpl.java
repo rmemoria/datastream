@@ -458,7 +458,8 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 			if (prop.getUse() == PropertyUse.REQUIRED) {
 				Object val = vals.getValue(prop.getName());
 				if (val == null) {
-					String s = "Property '" + vals.getClassMetaData().getGraph().getName() + "."  + prop.getElementName() + "' is required";
+                    String pname = prop.getElementName() != null? prop.getElementName(): prop.getName();
+					String s = "Property '" + vals.getClassMetaData().getGraph().getName() + "."  + pname + "' is required";
 					throw new DataStreamException(getNodeHistory() + ": " +  s);
 				}
 			}
@@ -517,7 +518,9 @@ public class XmlDataUnmarshallerImpl implements DataUnmarshaller {
 //        }
 
 		ObjectValues vals = objects.pop();
-		vals.addValue(prop.getPath(), val);
+        if (vals.findPropertyValue(prop) == null) {
+            vals.addValue(prop.getPath(), val);
+        }
 		objects.push(vals);
 	}
 	

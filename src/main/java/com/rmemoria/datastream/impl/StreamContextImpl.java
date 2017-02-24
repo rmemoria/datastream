@@ -194,7 +194,7 @@ public class StreamContextImpl implements StreamContext {
 	 */
 	protected ClassMetaData findClassMetaDataByClass(Class clazz) {
 		if (classMetaData != null) {
-			if (classMetaData.getGraphClass() == clazz)
+			if (classMetaData.getGraphClass() == clazz || classMetaData.getGraphClass().isAssignableFrom(clazz))
 				return classMetaData;
 		}
 		else {
@@ -203,6 +203,7 @@ public class StreamContextImpl implements StreamContext {
 					return cmd;
 			}
 		}
+
 		return null;
 	}
 	
